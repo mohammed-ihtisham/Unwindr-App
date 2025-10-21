@@ -11,14 +11,23 @@ interface Marker {
   active: boolean;
 }
 
+export interface ViewportBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
 const props = defineProps<{
   center: { lat: number; lng: number };
   markers: Marker[];
   selectedId: string | null;
+  isLoading?: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: 'markerClick', id: string): void;
+  (e: 'viewportChange', bounds: ViewportBounds): void;
 }>();
 
 const mapContainer = ref<HTMLDivElement | null>(null);
@@ -40,8 +49,14 @@ onMounted(() => {
     maxZoom: 19,
   }).addTo(map);
 
+  // Listen for viewport changes (moveend includes zoom and pan)
+  map.on('moveend', emitViewportBounds);
+
   // Initial markers
   updateMarkers();
+  
+  // Emit initial viewport bounds
+  emitViewportBounds();
 });
 
 onBeforeUnmount(() => {
@@ -152,11 +167,32 @@ function updateMarkerStyles() {
   });
 }
 
+function emitViewportBounds() {
+  if (!map) return;
+  
+  const bounds = map.getBounds();
+  const viewportBounds: ViewportBounds = {
+    north: bounds.getNorth(),
+    south: bounds.getSouth(),
+    east: bounds.getEast(),
+    west: bounds.getWest(),
+  };
+  
+  emit('viewportChange', viewportBounds);
+}
+
 function fitToMarkers() {
   if (!map || props.markers.length === 0) return;
 
   const bounds = L.latLngBounds(props.markers.map((m) => [m.lat, m.lng]));
-  map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+  
+  // If we have many markers, use a reasonable max zoom to avoid being too zoomed in
+  const maxZoom = props.markers.length > 20 ? 12 : 14;
+  
+  map.fitBounds(bounds, { 
+    padding: [50, 50], 
+    maxZoom: maxZoom 
+  });
 }
 
 defineExpose({
@@ -165,7 +201,19 @@ defineExpose({
 </script>
 
 <template>
-  <div ref="mapContainer" class="w-full h-full rounded-lg overflow-hidden" />
+  <div class="relative w-full h-full rounded-lg overflow-hidden">
+    <div ref="mapContainer" class="w-full h-full" />
+    <!-- Loading overlay -->
+    <div 
+      v-if="isLoading" 
+      class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10"
+    >
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+        <p class="text-sm text-gray-600">Loading places...</p>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>

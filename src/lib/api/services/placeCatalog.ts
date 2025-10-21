@@ -63,7 +63,6 @@ export const placeCatalogService = {
       API_ENDPOINTS.placeCatalog.getPlacesInArea,
       data
     );
-    // API returns the response directly, not in an array
     return response.places || [];
   },
 

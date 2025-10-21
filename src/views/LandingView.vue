@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, nextTick, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import { usePlacesStore } from '@/stores/usePlacesStore';
+import { usePlacesStore, type ViewportBounds } from '@/stores/usePlacesStore';
 import { INTERESTS } from '@/lib/interests';
+import { useEngagement } from '@/composables/useEngagement';
 import SearchBar from '@/components/SearchBar.vue';
 import FilterChips from '@/components/FilterChips.vue';
 import MileFilter from '@/components/MileFilter.vue';
@@ -15,6 +16,7 @@ import AuthModal from '@/components/AuthModal.vue';
 import PlaceDetailModal from '@/components/PlaceDetailModal.vue';
 
 const placesStore = usePlacesStore();
+const { recordLike } = useEngagement();
 const {
   searchQuery,
   distanceMiles,
@@ -27,10 +29,18 @@ const {
   pageCount,
   modalOpen,
   modalPlaceId,
+  isLoading,
+  hasMorePlaces,
+  remainingPlacesCount,
+  places,
+  error,
 } = storeToRefs(placesStore);
 
 // Auth modal state
 const showAuthModal = ref(false);
+
+// Map component reference
+const mapCanvasRef = ref<InstanceType<typeof MapCanvas> | null>(null);
 
 // Initialize data on mount
 onMounted(async () => {
@@ -38,20 +48,32 @@ onMounted(async () => {
   await placesStore.initialize();
 });
 
+// Watch for changes in places and fit map to markers
+watch(
+  () => places.value.length,
+  async (newLength, oldLength) => {
+    // Only fit to markers if we have places and the map is ready
+    if (newLength > 0 && mapCanvasRef.value && newLength !== oldLength) {
+      await nextTick();
+      mapCanvasRef.value.fitToMarkers();
+    }
+  }
+);
+
 // Map center follows user location or defaults to first place
 const mapCenter = computed(() => {
   if (userLocation.value) {
     return userLocation.value;
   }
-  if (paginatedPlaces.value.length > 0) {
-    return paginatedPlaces.value[0].location;
+  if (places.value.length > 0) {
+    return places.value[0].location;
   }
-  return { lat: 40.7536, lng: -73.9857 }; // NYC (where places are seeded)
+  return { lat: 42.3601, lng: -71.0589 }; // Boston, MA (where places are seeded)
 });
 
-// Map markers from paginated places
+// Map markers from ALL loaded places (not just paginated ones)
 const mapMarkers = computed(() => {
-  return paginatedPlaces.value.map((place) => ({
+  return places.value.map((place) => ({
     id: place.id,
     lat: place.location.lat,
     lng: place.location.lng,
@@ -68,8 +90,9 @@ function handlePlaceSelect(id: string) {
   placesStore.selectPlace(id);
 }
 
-function handleLike(id: string) {
-  // Like functionality will be implemented with backend integration
+async function handleLike(id: string) {
+  // Record like interaction
+  await recordLike(id);
 }
 
 function handleLogin() {
@@ -77,11 +100,27 @@ function handleLogin() {
 }
 
 function handleTagsGenerated(tags: string[]) {
-  console.log('Tags generated, triggering search with:', tags);
   // The tags are already set via the update:selected-tags event
   // The paginatedPlaces getter should automatically update when selectedInterests changes
   // This will trigger a reactive update of the places list
-  console.log('Search will be triggered automatically via reactive selectedInterests');
+}
+
+async function handleLoadMore() {
+  await placesStore.loadMorePlaces();
+  // Fit map to show all markers after loading more places
+  if (mapCanvasRef.value) {
+    // Use nextTick to ensure the map markers have been updated
+    await nextTick();
+    mapCanvasRef.value.fitToMarkers();
+  }
+}
+
+function handleRetry() {
+  placesStore.retryFetchPlaces();
+}
+
+function handleViewportChange(bounds: ViewportBounds) {
+  placesStore.setViewportBounds(bounds);
 }
 </script>
 
@@ -147,10 +186,13 @@ function handleTagsGenerated(tags: string[]) {
       <!-- Map Section -->
       <div class="flex-1 relative">
         <MapCanvas
+          ref="mapCanvasRef"
           :center="mapCenter"
           :markers="mapMarkers"
           :selected-id="selectedPlaceId"
+          :is-loading="isLoading"
           @marker-click="handleMarkerClick"
+          @viewport-change="handleViewportChange"
         />
       </div>
 
@@ -161,9 +203,15 @@ function handleTagsGenerated(tags: string[]) {
           :page="page"
           :page-count="pageCount"
           :selected-id="selectedPlaceId"
+          :is-loading="isLoading"
+          :has-more-places="hasMorePlaces"
+          :remaining-places-count="remainingPlacesCount"
+          :error="error"
           @select="handlePlaceSelect"
           @paginate="placesStore.setPage"
           @like="handleLike"
+          @load-more="handleLoadMore"
+          @retry="handleRetry"
         />
       </div>
     </div>

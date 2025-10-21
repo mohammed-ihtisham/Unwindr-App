@@ -82,41 +82,31 @@ async function generateTags() {
   apiError.value = null;
   
   try {
-    console.log('Calling API with:', {
-      userId: authStore.user.userId,
-      text: descriptionInput.value,
-      currentSelectedTags: props.selectedTags
-    });
     
     // Clear existing tags when generating new ones
     emit('update:selectedTags', []);
-    console.log('Cleared existing tags for fresh LLM generation');
     
     // Call the real API
     const response = await interestFilterService.inferPreferencesFromText({
       userId: authStore.user.userId,
       text: descriptionInput.value,
       // Optional: add location hint if available
-      // locationHint: 'New York, NY'
+      // locationHint: 'Boston, MA'
     });
     
-    console.log('Full API Response:', response);
     
     // Filter tags to only include those in availableTags (if provided)
     let validTags = response.tags;
     if (props.availableTags && props.availableTags.length > 0) {
       validTags = response.tags.filter(tag => props.availableTags!.includes(tag));
-      console.log('Filtered tags to available tags:', validTags);
     }
     
     // Add all valid tags (no need to filter against current since we cleared them)
     if (validTags.length > 0) {
-      console.log('Adding LLM-generated tags:', validTags);
       emit('update:selectedTags', validTags);
       
       // Auto-apply tags and trigger search
       emit('tagsGenerated', validTags);
-      console.log('Auto-applying tags and triggering search');
       
       // Close modal automatically after successful generation
       showModal.value = false;
@@ -124,18 +114,8 @@ async function generateTags() {
       showManualMode.value = false;
       apiError.value = null;
     } else if (response.tags.length === 0) {
-      console.log('API returned no tags');
-      console.log('AI Response details:', {
-        confidence: response.confidence,
-        rationale: response.rationale,
-        warnings: response.warnings,
-        needsConfirmation: response.needsConfirmation
-      });
       apiError.value = 'No relevant tags found for your description. Try being more specific or use manual selection.';
     } else if (validTags.length === 0) {
-      console.log('API returned tags but none match available tags');
-      console.log('API tags:', response.tags);
-      console.log('Available tags:', props.availableTags);
       apiError.value = 'Generated tags don\'t match available options. Try manual selection.';
     }
     
@@ -143,14 +123,8 @@ async function generateTags() {
     showManualMode.value = true;
     
     // Log confidence and rationale for debugging
-    console.log('AI Response:', {
-      confidence: response.confidence,
-      rationale: response.rationale,
-      warnings: response.warnings
-    });
     
   } catch (error: any) {
-    console.error('Error generating tags:', error);
     apiError.value = error.response?.data?.error || error.message || 'Failed to generate tags';
   } finally {
     isGenerating.value = false;
@@ -169,9 +143,7 @@ async function saveManualPreferences() {
   
   try {
     await interestFilterService.setPreferences(authStore.user.userId, props.selectedTags);
-    console.log('Preferences saved successfully');
   } catch (error: any) {
-    console.error('Error saving preferences:', error);
     apiError.value = error.response?.data?.error || error.message || 'Failed to save preferences';
   }
 }

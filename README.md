@@ -62,7 +62,6 @@ src/
 │   │   └── index.ts     # Main export
 │   ├── distance.ts      # Haversine distance calculation
 │   ├── interests.ts     # Interest tags and constants
-│   └── mock.ts          # Mock data generator
 ├── router/              # Vue Router configuration
 │   └── index.ts
 ├── assets/              # Global styles
@@ -168,7 +167,7 @@ The app uses Pinia for centralized state management:
 - Selected interests
 - Hidden gems toggle
 - User location
-- Place data (from API or mock)
+- Place data (from API)
 - Selected place
 - Pagination state
 - Loading and error states
@@ -195,14 +194,6 @@ The app is fully integrated with the backend API. It supports:
 - **QualityRanking** - Place quality metrics
 - **MediaAnalytics** - Engagement tracking
 
-### Mock Data Fallback
-
-The app can also run with mock data (18 places around San Francisco) when the backend is unavailable. To enable mock mode:
-
-```typescript
-// In LandingView.vue
-placesStore.toggleMockData(true);
-```
 
 ### API Documentation
 

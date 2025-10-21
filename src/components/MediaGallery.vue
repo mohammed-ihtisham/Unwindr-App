@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue';
 import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw } from 'lucide-vue-next';
+import { useEngagement } from '@/composables/useEngagement';
 
 const props = defineProps<{
   images: string[];
@@ -11,6 +12,7 @@ const emit = defineEmits<{
   (e: 'close'): void;
 }>();
 
+const { recordTap } = useEngagement();
 const currentIndex = ref(0);
 const isTransitioning = ref(false);
 const touchStartX = ref(0);
@@ -22,12 +24,19 @@ const currentImage = computed(() => props.images[currentIndex.value]);
 
 watch(
   () => props.open,
-  (isOpen) => {
+  async (isOpen) => {
     if (isOpen) {
       currentIndex.value = 0;
       zoom.value = 1;
       rotation.value = 0;
       document.body.style.overflow = 'hidden';
+      
+      // Record tap interaction when gallery opens
+      if (props.images.length > 0) {
+        // Use the current image as the media item ID
+        const mediaItemId = props.images[currentIndex.value];
+        await recordTap(mediaItemId);
+      }
     } else {
       document.body.style.overflow = '';
     }

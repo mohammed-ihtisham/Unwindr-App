@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { Heart, Share2, MapPin, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import type { Place } from '@/stores/usePlacesStore';
 import { usePlacesStore } from '@/stores/usePlacesStore';
+import { useEngagement } from '@/composables/useEngagement';
 import MediaGallery from './MediaGallery.vue';
 
 const props = defineProps<{
@@ -16,6 +17,7 @@ const emit = defineEmits<{
 }>();
 
 const placesStore = usePlacesStore();
+const { recordView, recordLike, recordShare } = useEngagement();
 const showGallery = ref(false);
 const currentImageIndex = ref(0);
 
@@ -36,7 +38,9 @@ function openGallery() {
   }
 }
 
-function navigateToDetail() {
+async function navigateToDetail() {
+  // Record view interaction
+  await recordView(props.place.id);
   placesStore.openModal(props.place.id);
 }
 
@@ -54,13 +58,22 @@ function prevImage(e: Event) {
   }
 }
 
-function handleShare() {
+async function handleShare() {
+  // Record share interaction
+  await recordShare(props.place.id);
+  
   if (navigator.share) {
     navigator.share({
       title: props.place.name,
       text: props.place.address,
     });
   }
+}
+
+async function handleLike() {
+  // Record like interaction
+  await recordLike(props.place.id);
+  emit('like', props.place.id);
 }
 </script>
 
@@ -125,7 +138,7 @@ function handleShare() {
 
       <!-- Heart Icon (Save) -->
       <button
-        @click.stop="emit('like', place.id)"
+        @click.stop="handleLike"
         class="absolute top-3 right-3 p-2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full shadow-md transition-all"
       >
         <Heart :size="18" class="text-gray-700" />
