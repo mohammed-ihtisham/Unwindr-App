@@ -30,10 +30,9 @@ const {
 const showAuthModal = ref(false);
 
 // Initialize data on mount
-onMounted(() => {
-  // Toggle this to use mock data during development
-  // placesStore.toggleMockData(true);
-  placesStore.initialize();
+onMounted(async () => {
+  // Use real API with proper seeding
+  await placesStore.initialize();
 });
 
 // Map center follows user location or defaults to first place
@@ -44,7 +43,7 @@ const mapCenter = computed(() => {
   if (paginatedPlaces.value.length > 0) {
     return paginatedPlaces.value[0].location;
   }
-  return { lat: 37.7749, lng: -122.4194 }; // San Francisco
+  return { lat: 40.7536, lng: -73.9857 }; // NYC (where places are seeded)
 });
 
 // Map markers from paginated places

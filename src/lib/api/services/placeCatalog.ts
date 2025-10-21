@@ -59,24 +59,24 @@ export const placeCatalogService = {
    * Get places within a circular area
    */
   async getPlacesInArea(data: GetPlacesInAreaRequest): Promise<ID[]> {
-    const response = await apiClient.post<GetPlacesInAreaResponse[]>(
+    const response = await apiClient.post<GetPlacesInAreaResponse>(
       API_ENDPOINTS.placeCatalog.getPlacesInArea,
       data
     );
-    // Query endpoints return arrays, take first result
-    return response[0]?.places || [];
+    // API returns the response directly, not in an array
+    return response.places || [];
   },
 
   /**
    * Get full details of a specific place
    */
   async getPlaceDetails(placeId: ID): Promise<GetPlaceDetailsResponse> {
-    const response = await apiClient.post<GetPlaceDetailsResponse[]>(
+    const response = await apiClient.post<GetPlaceDetailsResponse>(
       API_ENDPOINTS.placeCatalog.getPlaceDetails,
       { placeId }
     );
-    // Query endpoints return arrays, take first result
-    return response[0];
+    // API returns the response directly, not in an array
+    return response;
   },
 
   /**

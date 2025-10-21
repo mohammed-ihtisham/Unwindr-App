@@ -233,8 +233,8 @@ export const usePlacesStore = defineStore('places', {
      */
     async requestUserLocation() {
       if (!navigator.geolocation) {
-        // Fallback to San Francisco
-        this.setUserLocation({ lat: 37.7749, lng: -122.4194 });
+        // Fallback to NYC (where places are seeded)
+        this.setUserLocation({ lat: 40.7536, lng: -73.9857 });
         return;
       }
 
@@ -247,8 +247,8 @@ export const usePlacesStore = defineStore('places', {
           lng: position.coords.longitude,
         });
       } catch (error) {
-        // Fallback to San Francisco
-        this.setUserLocation({ lat: 37.7749, lng: -122.4194 });
+        // Fallback to NYC (where places are seeded)
+        this.setUserLocation({ lat: 40.7536, lng: -73.9857 });
       }
     },
 
