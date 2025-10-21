@@ -6,7 +6,7 @@ import { INTERESTS } from '@/lib/interests';
 import SearchBar from '@/components/SearchBar.vue';
 import FilterChips from '@/components/FilterChips.vue';
 import MileFilter from '@/components/MileFilter.vue';
-import TagSelector from '@/components/TagSelector.vue';
+import InterestSelector from '@/components/InterestSelector.vue';
 import ToggleSwitch from '@/components/ToggleSwitch.vue';
 import MapCanvas from '@/components/MapCanvas.vue';
 import PlacesPanel from '@/components/PlacesPanel.vue';
@@ -75,6 +75,14 @@ function handleLike(id: string) {
 function handleLogin() {
   showAuthModal.value = true;
 }
+
+function handleTagsGenerated(tags: string[]) {
+  console.log('Tags generated, triggering search with:', tags);
+  // The tags are already set via the update:selected-tags event
+  // The paginatedPlaces getter should automatically update when selectedInterests changes
+  // This will trigger a reactive update of the places list
+  console.log('Search will be triggered automatically via reactive selectedInterests');
+}
 </script>
 
 <template>
@@ -115,10 +123,11 @@ function handleLogin() {
             :model-value="distanceMiles"
             @update:model-value="placesStore.setDistance"
           />
-          <TagSelector
+          <InterestSelector
             :available-tags="[...INTERESTS]"
             :selected-tags="selectedInterests"
             @update:selected-tags="(val) => (selectedInterests = val)"
+            @tags-generated="handleTagsGenerated"
           />
           <!-- Hidden Gems Toggle -->
           <div class="flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-lg bg-white">

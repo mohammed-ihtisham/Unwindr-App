@@ -1,20 +1,38 @@
 /**
  * Available interest tags for places
  */
-export const INTERESTS = [
-  'coffee',
-  'parks',
-  'restaurants',
-  'art',
-  'music',
-  'history',
-  'shopping',
-  'nightlife',
-  'outdoors',
-  'family',
-] as const;
+export type Tag =
+  | "quiet_spaces"
+  | "waterfront_views"
+  | "nature_walks"
+  | "sunset_spots"
+  | "not_crowded"
+  | "short_drive"
+  | "instagram_worthy"
+  | "lively_nightlife"
+  | "live_music"
+  | "historic_charms"
+  | "family_friendly"
+  | "coffee_nooks"
+  | "scenic_overlook";
 
-export type InterestTag = (typeof INTERESTS)[number];
+export const INTERESTS: Tag[] = [
+  "quiet_spaces",
+  "waterfront_views", 
+  "nature_walks",
+  "sunset_spots",
+  "not_crowded",
+  "short_drive",
+  "instagram_worthy",
+  "lively_nightlife",
+  "live_music",
+  "historic_charms",
+  "family_friendly",
+  "coffee_nooks",
+  "scenic_overlook"
+];
+
+export type InterestTag = Tag;
 
 /**
  * Distance filter options in miles

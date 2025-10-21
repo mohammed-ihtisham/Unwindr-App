@@ -6,6 +6,8 @@
 import { apiClient } from '../client';
 import { API_ENDPOINTS } from '../config';
 import type {
+  SeedMediaRequest,
+  SeedMediaResponse,
   AddMediaRequest,
   AddMediaResponse,
   DeleteMediaRequest,
@@ -16,6 +18,15 @@ import type {
 } from '../types';
 
 export const mediaLibraryService = {
+  /**
+   * Seed media items from external source
+   */
+  async seedMedia(placeId: ID, urls: string[]): Promise<SeedMediaResponse> {
+    return apiClient.post<SeedMediaResponse>(API_ENDPOINTS.mediaLibrary.seedMedia, {
+      placeId,
+      urls,
+    });
+  },
 
   /**
    * Add a user-contributed media item
