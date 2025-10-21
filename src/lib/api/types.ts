@@ -23,7 +23,8 @@ export interface RegisterUserRequest {
 }
 
 export interface RegisterUserResponse {
-  userId: ID;
+  userId?: ID;
+  error?: string;
 }
 
 export interface LoginRequest {
@@ -32,7 +33,8 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  sessionToken: string;
+  sessionToken?: string;
+  error?: string;
 }
 
 export interface LogoutRequest {
@@ -54,7 +56,8 @@ export interface UserProfile {
 }
 
 export interface GetAuthenticatedUserResponse {
-  userProfile: UserProfile;
+  userProfile?: UserProfile | null;
+  error?: string;
 }
 
 export interface ChangePasswordRequest {

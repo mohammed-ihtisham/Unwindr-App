@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { usePlacesStore } from '@/stores/usePlacesStore';
 import { INTERESTS } from '@/lib/interests';
@@ -11,6 +11,7 @@ import ToggleSwitch from '@/components/ToggleSwitch.vue';
 import MapCanvas from '@/components/MapCanvas.vue';
 import PlacesPanel from '@/components/PlacesPanel.vue';
 import LoginButton from '@/components/LoginButton.vue';
+import AuthModal from '@/components/AuthModal.vue';
 
 const placesStore = usePlacesStore();
 const {
@@ -24,6 +25,9 @@ const {
   page,
   pageCount,
 } = storeToRefs(placesStore);
+
+// Auth modal state
+const showAuthModal = ref(false);
 
 // Initialize data on mount
 onMounted(() => {
@@ -68,8 +72,7 @@ function handleLike(id: string) {
 }
 
 function handleLogin() {
-  console.log('Login clicked');
-  // TODO: Implement login functionality
+  showAuthModal.value = true;
 }
 </script>
 
@@ -154,6 +157,9 @@ function handleLogin() {
         />
       </div>
     </div>
+
+    <!-- Auth Modal -->
+    <AuthModal :show="showAuthModal" @close="showAuthModal = false" />
   </div>
 </template>
 

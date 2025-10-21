@@ -10,3 +10,17 @@
   margin: 0;
   padding: 0;
 }
+
+/* Ensure modals appear above Leaflet maps */
+.leaflet-control-container {
+  z-index: 1000;
+}
+
+.leaflet-pane {
+  z-index: 400;
+}
+
+/* Modal z-index override for any conflicts */
+.modal-backdrop {
+  z-index: 9999 !important;
+}

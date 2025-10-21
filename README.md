@@ -30,6 +30,7 @@ A modern, reactive place discovery app built with Vue 3, TypeScript, and Tailwin
 ```
 src/
 ├── components/          # Reusable Vue components
+│   ├── AuthModal.vue    # Login/Register modal
 │   ├── FilterChips.vue
 │   ├── LoginButton.vue
 │   ├── MapCanvas.vue
@@ -135,6 +136,7 @@ npm run format
 
 ### Interactions
 
+- **Authentication**: Click "Sign in" to open login/register modal
 - **Search**: Type to search places by name, address, or interests (debounced)
 - **Map**: Click markers to select places
 - **Cards**: Click cards to select and highlight on map
@@ -154,10 +156,11 @@ In Media Gallery:
 The app uses Pinia for centralized state management:
 
 ### Auth Store (`useAuthStore`)
-- User authentication state
-- Login/logout functionality
-- Session token management
-- User profile data
+- User authentication state (login/logout/register)
+- Session token management (persisted in localStorage)
+- User profile data (username, userId, canModerate)
+- Password change functionality
+- Auto-restore session on app startup
 
 ### Places Store (`usePlacesStore`)
 - Search query
@@ -213,7 +216,8 @@ For complete API integration details, see:
 - [x] Backend integration with API endpoints
 - [x] User authentication and profiles
 - [x] Type-safe API services
-- [ ] Login/signup modal UI
+- [x] Login/signup modal UI
+- [ ] Route guards for protected routes
 - [ ] User-contributed places UI
 - [ ] Photo upload functionality
 - [ ] Social features UI (likes, shares, comments)

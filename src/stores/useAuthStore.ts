@@ -37,7 +37,7 @@ export const useAuthStore = defineStore('auth', {
         // Auto-login after registration
         return await this.login(username, password);
       } catch (error: any) {
-        this.error = error.response?.data?.error || 'Registration failed';
+        this.error = error.response?.data?.error || error.message || 'Registration failed';
         return false;
       } finally {
         this.isLoading = false;
@@ -57,7 +57,7 @@ export const useAuthStore = defineStore('auth', {
         await this.fetchUser();
         return true;
       } catch (error: any) {
-        this.error = error.response?.data?.error || 'Login failed';
+        this.error = error.response?.data?.error || error.message || 'Login failed';
         return false;
       } finally {
         this.isLoading = false;
@@ -92,7 +92,7 @@ export const useAuthStore = defineStore('auth', {
 
       try {
         const response = await userAuthService.getAuthenticatedUser();
-        this.user = response.userProfile;
+        this.user = response.userProfile || null;
       } catch (error: any) {
         this.error = error.response?.data?.error || 'Failed to fetch user';
         this.user = null;
@@ -123,7 +123,13 @@ export const useAuthStore = defineStore('auth', {
      * Initialize auth state (call on app mount)
      */
     async initialize(): Promise<void> {
-      // Try to fetch user if there's a stored session token
+      // Only try to fetch user if there's a stored session token
+      const sessionToken = localStorage.getItem('sessionToken');
+      if (!sessionToken) {
+        this.user = null;
+        return;
+      }
+
       try {
         await this.fetchUser();
       } catch (error) {

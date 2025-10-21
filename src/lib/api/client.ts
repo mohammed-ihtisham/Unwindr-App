@@ -14,23 +14,16 @@ class ApiClient {
     this.client = axios.create({
       baseURL: API_CONFIG.baseURL,
       timeout: API_CONFIG.timeout,
+      withCredentials: API_CONFIG.withCredentials,
       headers: {
         'Content-Type': 'application/json',
       },
     });
-
-    // Request interceptor to add session token
+    
+    // Request interceptor - Note: sessionToken is handled per-endpoint in services
+    // We don't add it globally to avoid conflicts with login/register endpoints
     this.client.interceptors.request.use(
-      (config) => {
-        if (this.sessionToken && config.data) {
-          // Add sessionToken to request body if it exists
-          config.data = {
-            ...config.data,
-            sessionToken: this.sessionToken,
-          };
-        }
-        return config;
-      },
+      (config) => config,
       (error) => Promise.reject(error)
     );
 
