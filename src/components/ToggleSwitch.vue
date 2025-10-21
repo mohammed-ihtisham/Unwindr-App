@@ -1,0 +1,35 @@
+<script setup lang="ts">
+const props = defineProps<{
+  modelValue: boolean;
+  label?: string;
+}>();
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: boolean): void;
+}>();
+
+function toggle() {
+  emit('update:modelValue', !props.modelValue);
+}
+</script>
+
+<template>
+  <button
+    @click="toggle"
+    :class="[
+      'relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+      modelValue ? 'bg-blue-500' : 'bg-gray-300',
+    ]"
+    role="switch"
+    :aria-checked="modelValue"
+    :aria-label="label || 'Toggle'"
+  >
+    <span
+      :class="[
+        'inline-block w-4 h-4 transform transition-transform bg-white rounded-full',
+        modelValue ? 'translate-x-6' : 'translate-x-1',
+      ]"
+    />
+  </button>
+</template>
+
