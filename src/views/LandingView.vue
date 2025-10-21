@@ -27,8 +27,9 @@ const {
 
 // Initialize data on mount
 onMounted(() => {
-  placesStore.loadMockData();
-  placesStore.requestUserLocation();
+  // Toggle this to use mock data during development
+  // placesStore.toggleMockData(true);
+  placesStore.initialize();
 });
 
 // Map center follows user location or defaults to first place

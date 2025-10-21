@@ -1,5 +1,14 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import { RouterView } from 'vue-router';
+import { useAuthStore } from '@/stores/useAuthStore';
+
+const authStore = useAuthStore();
+
+// Initialize auth on app mount
+onMounted(() => {
+  authStore.initialize();
+});
 </script>
 
 <template>

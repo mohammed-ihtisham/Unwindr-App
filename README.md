@@ -11,6 +11,8 @@ A modern, reactive place discovery app built with Vue 3, TypeScript, and Tailwin
 - 🖼️ **Media Gallery** - Lightbox gallery with keyboard navigation
 - 📄 **Pagination** - Smooth navigation through place listings
 - 🎨 **Modern UI** - Clean design with Tailwind CSS utilities
+- 🔐 **Authentication** - User login/registration with session management
+- 🌐 **Backend Integration** - Full REST API integration with type-safe services
 
 ## Tech Stack
 
@@ -21,26 +23,42 @@ A modern, reactive place discovery app built with Vue 3, TypeScript, and Tailwin
 - **Tailwind CSS** - Utility-first styling
 - **Leaflet** - Interactive maps
 - **Lucide Icons** - Beautiful icons
+- **Axios** - HTTP client for API requests
 
 ## Project Structure
 
 ```
 src/
 ├── components/          # Reusable Vue components
-│   ├── SearchBar.vue
 │   ├── FilterChips.vue
-│   ├── ToggleSwitch.vue
+│   ├── LoginButton.vue
 │   ├── MapCanvas.vue
+│   ├── MediaGallery.vue
+│   ├── MileFilter.vue
+│   ├── Pagination.vue
 │   ├── PlaceCard.vue
 │   ├── PlacesPanel.vue
-│   ├── Pagination.vue
-│   ├── MediaGallery.vue
-│   └── LoginButton.vue
+│   ├── SearchBar.vue
+│   ├── TagSelector.vue
+│   └── ToggleSwitch.vue
 ├── views/               # Page components
 │   └── LandingView.vue
 ├── stores/              # Pinia stores
-│   └── usePlacesStore.ts
-├── lib/                 # Utility functions
+│   ├── useAuthStore.ts  # Authentication state
+│   └── usePlacesStore.ts # Places data & filtering
+├── lib/                 # Utility functions & API
+│   ├── api/             # Backend API integration
+│   │   ├── client.ts    # HTTP client
+│   │   ├── config.ts    # API configuration
+│   │   ├── types.ts     # TypeScript types
+│   │   ├── services/    # API service modules
+│   │   │   ├── interestFilter.ts
+│   │   │   ├── mediaAnalytics.ts
+│   │   │   ├── mediaLibrary.ts
+│   │   │   ├── placeCatalog.ts
+│   │   │   ├── qualityRanking.ts
+│   │   │   └── userAuth.ts
+│   │   └── index.ts     # Main export
 │   ├── distance.ts      # Haversine distance calculation
 │   ├── interests.ts     # Interest tags and constants
 │   └── mock.ts          # Mock data generator
@@ -64,6 +82,9 @@ src/
 # Install dependencies
 npm install
 
+# Create environment file
+echo "VITE_API_BASE_URL=http://localhost:8000" > .env
+
 # Start development server
 npm run dev
 
@@ -73,6 +94,8 @@ npm run build
 # Preview production build
 npm run preview
 ```
+
+**Note**: Make sure your backend API is running at `http://localhost:8000` or update the `.env` file accordingly.
 
 ## Development
 
@@ -128,16 +151,24 @@ In Media Gallery:
 
 ## State Management
 
-The app uses Pinia for centralized state management. The main store (`usePlacesStore`) manages:
+The app uses Pinia for centralized state management:
 
+### Auth Store (`useAuthStore`)
+- User authentication state
+- Login/logout functionality
+- Session token management
+- User profile data
+
+### Places Store (`usePlacesStore`)
 - Search query
 - Distance filter
 - Selected interests
 - Hidden gems toggle
 - User location
-- Place data
+- Place data (from API or mock)
 - Selected place
 - Pagination state
+- Loading and error states
 
 All filtering and pagination logic is handled through computed getters for optimal reactivity.
 
@@ -149,24 +180,45 @@ All filtering and pagination logic is handled through computed getters for optim
 4. Components receive updated data via props
 5. UI updates automatically without page reloads
 
-## Mock Data
+## Backend Integration
 
-The app currently uses mock data with 18 places around San Francisco. Each place includes:
-- Name and address
-- Interest tags
-- Hidden gem status
-- GPS coordinates
-- Multiple images (via Unsplash)
-- Like count
+The app is fully integrated with the backend API. It supports:
+
+### Concepts Integrated
+- **UserAuth** - User authentication and authorization
+- **PlaceCatalog** - Place discovery and management
+- **InterestFilter** - AI-powered interest filtering
+- **MediaLibrary** - Media storage and retrieval
+- **QualityRanking** - Place quality metrics
+- **MediaAnalytics** - Engagement tracking
+
+### Mock Data Fallback
+
+The app can also run with mock data (18 places around San Francisco) when the backend is unavailable. To enable mock mode:
+
+```typescript
+// In LandingView.vue
+placesStore.toggleMockData(true);
+```
+
+### API Documentation
+
+For complete API integration details, see:
+- `INTEGRATION_GUIDE.md` - Comprehensive integration documentation
+- `QUICK_REFERENCE.md` - Quick API reference
+- `api-spec.md` - Backend API specification
 
 ## Future Enhancements
 
-- [ ] Backend integration with API endpoints
-- [ ] User authentication and profiles
-- [ ] Real-time place data
-- [ ] User-contributed places and photos
-- [ ] Social features (likes, shares, comments)
-- [ ] Advanced search and recommendations
+- [x] Backend integration with API endpoints
+- [x] User authentication and profiles
+- [x] Type-safe API services
+- [ ] Login/signup modal UI
+- [ ] User-contributed places UI
+- [ ] Photo upload functionality
+- [ ] Social features UI (likes, shares, comments)
+- [ ] Natural language search UI
+- [ ] Quality ranking visualization
 - [ ] Mobile app (Capacitor/React Native)
 - [ ] Offline support with PWA
 

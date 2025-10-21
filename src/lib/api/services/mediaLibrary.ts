@@ -1,0 +1,66 @@
+/**
+ * MediaLibrary API Service
+ * Handles media storage and retrieval
+ */
+
+import { apiClient } from '../client';
+import { API_ENDPOINTS } from '../config';
+import type {
+  SeedMediaRequest,
+  SeedMediaResponse,
+  AddMediaRequest,
+  AddMediaResponse,
+  DeleteMediaRequest,
+  DeleteMediaResponse,
+  GetMediaByPlaceRequest,
+  GetMediaByPlaceResponse,
+  ID,
+} from '../types';
+
+export const mediaLibraryService = {
+  /**
+   * Seed media items from external source
+   */
+  async seedMedia(placeId: ID, urls: string[]): Promise<SeedMediaResponse> {
+    return apiClient.post<SeedMediaResponse>(API_ENDPOINTS.mediaLibrary.seedMedia, {
+      placeId,
+      urls,
+    });
+  },
+
+  /**
+   * Add a user-contributed media item
+   */
+  async addMedia(data: AddMediaRequest): Promise<AddMediaResponse> {
+    return apiClient.post<AddMediaResponse>(API_ENDPOINTS.mediaLibrary.addMedia, data);
+  },
+
+  /**
+   * Delete a media item
+   */
+  async deleteMedia(userId: ID, mediaId: ID): Promise<DeleteMediaResponse> {
+    return apiClient.post<DeleteMediaResponse>(API_ENDPOINTS.mediaLibrary.deleteMedia, {
+      userId,
+      mediaId,
+    });
+  },
+
+  /**
+   * Get all media for a specific place
+   */
+  async getMediaByPlace(placeId: ID): Promise<ID[]> {
+    const response = await apiClient.post<GetMediaByPlaceResponse[]>(
+      API_ENDPOINTS.mediaLibrary.getMediaByPlace,
+      { placeId }
+    );
+    // Query endpoints return arrays, take first result
+    // Note: API spec shows mediaIds as string, not string[]
+    const mediaIds = response[0]?.mediaIds;
+    // Handle case where it might be a string or array
+    if (typeof mediaIds === 'string') {
+      return [mediaIds];
+    }
+    return mediaIds || [];
+  },
+};
+
