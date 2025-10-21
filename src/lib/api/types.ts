@@ -187,14 +187,6 @@ export interface GetPlaceDetailsResponse {
 // MediaLibrary Types
 // ============================================================================
 
-export interface SeedMediaRequest {
-  placeId: ID;
-  urls: string[];
-}
-
-export interface SeedMediaResponse {
-  count: number;
-}
 
 export interface AddMediaRequest {
   userId: ID;

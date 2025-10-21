@@ -29,6 +29,8 @@ type State = {
   isLoading: boolean;
   error: string | null;
   useMockData: boolean; // Toggle between mock and real data
+  modalOpen: boolean;
+  modalPlaceId: string | null;
 };
 
 /**
@@ -64,6 +66,8 @@ export const usePlacesStore = defineStore('places', {
     isLoading: false,
     error: null,
     useMockData: false, // Set to true to use mock data for development
+    modalOpen: false,
+    modalPlaceId: null,
   }),
   getters: {
     filteredPlaces: (state): Place[] => {
@@ -119,6 +123,9 @@ export const usePlacesStore = defineStore('places', {
     },
     selectedPlace(): Place | null {
       return this.places.find((p) => p.id === this.selectedPlaceId) ?? null;
+    },
+    modalPlace(): Place | null {
+      return this.places.find((p) => p.id === this.modalPlaceId) ?? null;
     },
   },
   actions: {
@@ -205,12 +212,11 @@ export const usePlacesStore = defineStore('places', {
         const placesWithMedia = await Promise.all(
           placeDetailsResponses.map(async (response) => {
             try {
-              const mediaIds = await mediaLibraryService.getMediaByPlace(response.place.id);
-              // In a real implementation, you'd fetch the actual media URLs
-              // For now, we'll use placeholder URLs or empty array
-              const mediaUrls: string[] = [];
+              // Use the workaround method to get actual URLs instead of IDs
+              const mediaUrls = await mediaLibraryService.getMediaUrlsByPlace(response.place.id);
               return convertPlaceDetailsToPlace(response.place, mediaUrls);
             } catch (error) {
+              console.error(`Failed to fetch media for ${response.place.name}:`, error);
               // If media fetch fails, continue with empty media
               return convertPlaceDetailsToPlace(response.place, []);
             }
@@ -300,6 +306,22 @@ export const usePlacesStore = defineStore('places', {
       if (useMock) {
         this.loadMockData();
       }
+    },
+
+    /**
+     * Open property detail modal
+     */
+    openModal(placeId: string) {
+      this.modalPlaceId = placeId;
+      this.modalOpen = true;
+    },
+
+    /**
+     * Close property detail modal
+     */
+    closeModal() {
+      this.modalOpen = false;
+      this.modalPlaceId = null;
     },
 
     /**

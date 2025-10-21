@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import { Heart, Share2, MapPin, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import type { Place } from '@/stores/usePlacesStore';
+import { usePlacesStore } from '@/stores/usePlacesStore';
 import MediaGallery from './MediaGallery.vue';
 
 const props = defineProps<{
@@ -14,6 +15,7 @@ const emit = defineEmits<{
   (e: 'like', id: string): void;
 }>();
 
+const placesStore = usePlacesStore();
 const showGallery = ref(false);
 const currentImageIndex = ref(0);
 
@@ -32,6 +34,10 @@ function openGallery() {
   if (props.place.images.length > 0) {
     showGallery.value = true;
   }
+}
+
+function navigateToDetail() {
+  placesStore.openModal(props.place.id);
 }
 
 function nextImage(e: Event) {
@@ -64,12 +70,12 @@ function handleShare() {
       'group relative bg-white border border-gray-200 rounded-lg overflow-hidden transition-all cursor-pointer hover:shadow-lg',
       selected ? 'ring-2 ring-blue-500 shadow-xl' : '',
     ]"
-    @click="emit('select', place.id)"
+    @click="navigateToDetail"
   >
     <!-- Image Carousel -->
     <div
       class="relative h-64 bg-gray-200 overflow-hidden"
-      @click.stop="openGallery"
+      @click.stop="navigateToDetail"
     >
       <img
         v-if="currentImage"

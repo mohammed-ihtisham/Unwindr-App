@@ -12,6 +12,7 @@ import MapCanvas from '@/components/MapCanvas.vue';
 import PlacesPanel from '@/components/PlacesPanel.vue';
 import LoginButton from '@/components/LoginButton.vue';
 import AuthModal from '@/components/AuthModal.vue';
+import PlaceDetailModal from '@/components/PlaceDetailModal.vue';
 
 const placesStore = usePlacesStore();
 const {
@@ -24,6 +25,8 @@ const {
   selectedPlaceId,
   page,
   pageCount,
+  modalOpen,
+  modalPlaceId,
 } = storeToRefs(placesStore);
 
 // Auth modal state
@@ -66,8 +69,7 @@ function handlePlaceSelect(id: string) {
 }
 
 function handleLike(id: string) {
-  console.log('Like place:', id);
-  // TODO: Implement like functionality with backend
+  // Like functionality will be implemented with backend integration
 }
 
 function handleLogin() {
@@ -159,6 +161,14 @@ function handleLogin() {
 
     <!-- Auth Modal -->
     <AuthModal :show="showAuthModal" @close="showAuthModal = false" />
+
+    <!-- Place Detail Modal -->
+    <PlaceDetailModal
+      :place-id="modalPlaceId"
+      :open="modalOpen"
+      @close="placesStore.closeModal"
+    />
+
   </div>
 </template>
 
