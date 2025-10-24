@@ -2,7 +2,6 @@
 import { computed, onMounted, ref, nextTick, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { usePlacesStore, type ViewportBounds } from '@/stores/usePlacesStore';
-import { INTERESTS } from '@/lib/interests';
 import { useEngagement } from '@/composables/useEngagement';
 import SearchBar from '@/components/SearchBar.vue';
 import FilterChips from '@/components/FilterChips.vue';
@@ -23,10 +22,8 @@ const {
   selectedInterests,
   showHiddenGems,
   userLocation,
-  paginatedPlaces,
+  allPlaces,
   selectedPlaceId,
-  page,
-  pageCount,
   modalOpen,
   modalPlaceId,
   isLoading,
@@ -34,6 +31,9 @@ const {
   remainingPlacesCount,
   places,
   error,
+  loadingProgress,
+  initialPlacesLoaded,
+  backgroundLoading,
 } = storeToRefs(placesStore);
 
 // Auth modal state
@@ -99,10 +99,9 @@ function handleLogin() {
   showAuthModal.value = true;
 }
 
-function handleTagsGenerated(tags: string[]) {
+function handleTagsGenerated() {
   // The tags are already set via the update:selected-tags event
-  // The paginatedPlaces getter should automatically update when selectedInterests changes
-  // This will trigger a reactive update of the places list
+  // The filtering will automatically update when selectedInterests changes
 }
 
 async function handleLoadMore() {
@@ -163,7 +162,6 @@ function handleViewportChange(bounds: ViewportBounds) {
             @update:model-value="placesStore.setDistance"
           />
           <InterestSelector
-            :available-tags="[...INTERESTS]"
             :selected-tags="selectedInterests"
             @update:selected-tags="(val) => (selectedInterests = val)"
             @tags-generated="handleTagsGenerated"
@@ -199,16 +197,17 @@ function handleViewportChange(bounds: ViewportBounds) {
       <!-- Places Panel -->
       <div class="w-full lg:w-[600px] xl:w-[700px] border-l border-gray-200">
         <PlacesPanel
-          :places="paginatedPlaces"
-          :page="page"
-          :page-count="pageCount"
+          ref="placesPanelRef"
+          :places="allPlaces"
           :selected-id="selectedPlaceId"
           :is-loading="isLoading"
           :has-more-places="hasMorePlaces"
           :remaining-places-count="remainingPlacesCount"
           :error="error"
+          :loading-progress="loadingProgress"
+          :initial-places-loaded="initialPlacesLoaded"
+          :background-loading="backgroundLoading"
           @select="handlePlaceSelect"
-          @paginate="placesStore.setPage"
           @like="handleLike"
           @load-more="handleLoadMore"
           @retry="handleRetry"

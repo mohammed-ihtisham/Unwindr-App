@@ -33,6 +33,7 @@ const emit = defineEmits<{
 const mapContainer = ref<HTMLDivElement | null>(null);
 let map: L.Map | null = null;
 const markerRefs = new Map<string, L.Marker>();
+const isUserInteracting = ref(false); // Track if user is manually interacting with markers
 
 onMounted(() => {
   if (!mapContainer.value) return;
@@ -81,7 +82,8 @@ watch(
     if (newId && map) {
       const marker = props.markers.find((m) => m.id === newId);
       if (marker) {
-        map.setView([marker.lat, marker.lng], 15);
+        // Always zoom in to the selected marker with a consistent zoom level
+        map.setView([marker.lat, marker.lng], 16, { animate: true });
       }
     }
     updateMarkerStyles();
@@ -129,6 +131,7 @@ function updateMarkers() {
       marker = L.marker([markerData.lat, markerData.lng], { icon })
         .addTo(map!)
         .on('click', () => {
+          isUserInteracting.value = true;
           emit('markerClick', markerData.id);
         });
 
@@ -140,7 +143,11 @@ function updateMarkers() {
   });
 
   updateMarkerStyles();
-  fitToMarkers();
+  
+  // Only auto-fit to markers if user hasn't manually interacted with markers
+  if (!isUserInteracting.value) {
+    fitToMarkers();
+  }
 }
 
 function updateMarkerStyles() {
@@ -195,8 +202,13 @@ function fitToMarkers() {
   });
 }
 
+function resetUserInteraction() {
+  isUserInteracting.value = false;
+}
+
 defineExpose({
   fitToMarkers,
+  resetUserInteraction,
 });
 </script>
 

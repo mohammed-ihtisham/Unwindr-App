@@ -187,6 +187,14 @@ export interface GetPlaceDetailsResponse {
 // MediaLibrary Types
 // ============================================================================
 
+export interface SeedMediaRequest {
+  placeId: ID;
+  urls: string[];
+}
+
+export interface SeedMediaResponse {
+  count: number;
+}
 
 export interface AddMediaRequest {
   userId: ID;
@@ -327,5 +335,16 @@ export interface GetMatchingPlacesRequest {
 
 export interface GetMatchingPlacesResponse {
   matches: ID[];
+}
+
+export interface GetAvailableTagsRequest {}
+
+export interface TagOption {
+  tag: string;
+  description: string;
+}
+
+export interface GetAvailableTagsResponse {
+  tags: TagOption[];
 }
 

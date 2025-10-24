@@ -83,6 +83,7 @@ async function handleLike() {
       'group relative bg-white border border-gray-200 rounded-lg overflow-hidden transition-all cursor-pointer hover:shadow-lg',
       selected ? 'ring-2 ring-blue-500 shadow-xl' : '',
     ]"
+    :data-place-id="place.id"
     @click="navigateToDetail"
   >
     <!-- Image Carousel -->

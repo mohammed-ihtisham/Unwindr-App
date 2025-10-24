@@ -16,6 +16,8 @@ import type {
   ClearPreferencesResponse,
   GetMatchingPlacesRequest,
   GetMatchingPlacesResponse,
+  GetAvailableTagsRequest,
+  GetAvailableTagsResponse,
   ID,
 } from '../types';
 
@@ -70,6 +72,15 @@ export const interestFilterService = {
       { userId, places }
     );
     return response.matches;
+  },
+
+  /**
+   * Get all available interest tags from the API
+   */
+  async getAvailableTags(): Promise<GetAvailableTagsResponse> {
+    return apiClient.get<GetAvailableTagsResponse>(
+      API_ENDPOINTS.interestFilter.getAvailableTags
+    );
   },
 };
 

@@ -30,8 +30,6 @@ type State = {
   userLocation: { lat: number; lng: number } | null;
   places: Place[];
   selectedPlaceId: string | null;
-  page: number;
-  pageSize: number;
   isLoading: boolean;
   error: string | null;
   modalOpen: boolean;
@@ -39,17 +37,25 @@ type State = {
   allPlaceIds: string[]; // Store all available place IDs
   loadedPlaceIds: string[]; // Store IDs of places we've already loaded details for
   viewportBounds: ViewportBounds | null; // Current map viewport bounds
+  loadingProgress: number; // Progress percentage for initial loading
+  initialPlacesLoaded: boolean; // Track if initial batch is loaded for immediate display
+  backgroundLoading: boolean; // Track if background loading is in progress
+  cachedPlaces: Place[]; // Cache for places to avoid re-fetching
+  cacheTimestamp: number | null; // Timestamp of when cache was created
 };
 
 /**
  * Convert API PlaceDetails to our Place type
  */
 function convertPlaceDetailsToPlace(details: PlaceDetails, mediaUrls: string[] = []): Place {
+  // Use the category directly from the API without hardcoded mapping
+  const interests = [details.category];
+  
   return {
     id: details.id,
     name: details.name,
     address: details.address,
-    interests: [details.category], // Map category to interests array
+    interests: interests,
     hiddenGem: !details.verified, // Unverified places are "hidden gems"
     location: {
       lat: details.location.coordinates[1], // GeoJSON is [lng, lat]
@@ -69,8 +75,6 @@ export const usePlacesStore = defineStore('places', {
     userLocation: null,
     places: [],
     selectedPlaceId: null,
-    page: 1,
-    pageSize: 6,
     isLoading: false,
     error: null,
     modalOpen: false,
@@ -78,6 +82,11 @@ export const usePlacesStore = defineStore('places', {
     allPlaceIds: [],
     loadedPlaceIds: [],
     viewportBounds: null,
+    loadingProgress: 0,
+    initialPlacesLoaded: false,
+    backgroundLoading: false,
+    cachedPlaces: [],
+    cacheTimestamp: null,
   }),
   getters: {
     // All places with filters applied (search, distance, hidden gems)
@@ -111,8 +120,15 @@ export const usePlacesStore = defineStore('places', {
         );
       }
 
-      // Note: Interest filtering is now handled server-side via InterestFilter API
-      // Client-side interest filtering is removed since it's done in fetchPlaces()
+      // Apply interest/category filtering
+      if (state.selectedInterests.length > 0) {
+        items = items.filter((p) => {
+          // Check if any of the place's interests match any of the selected interests
+          return p.interests.some(placeInterest => 
+            state.selectedInterests.includes(placeInterest)
+          );
+        });
+      }
 
       // Apply hidden gems filter
       if (state.showHiddenGems) {
@@ -144,12 +160,8 @@ export const usePlacesStore = defineStore('places', {
         );
       });
     },
-    pageCount(): number {
-      // For viewport filtering, we don't need pagination - show all visible places
-      return 1;
-    },
-    paginatedPlaces(): Place[] {
-      // Show all places in the current viewport (no pagination needed)
+    // Show only places within the current map viewport
+    allPlaces(): Place[] {
       return this.viewportFilteredPlaces;
     },
     selectedPlace(): Place | null {
@@ -159,26 +171,29 @@ export const usePlacesStore = defineStore('places', {
       return this.places.find((p) => p.id === this.modalPlaceId) ?? null;
     },
     hasMorePlaces(): boolean {
-      return this.allPlaceIds.length > this.loadedPlaceIds.length;
+      // All places are now prefetched, so no more places to load
+      return false;
     },
     remainingPlacesCount(): number {
-      return Math.max(0, this.allPlaceIds.length - this.loadedPlaceIds.length);
+      // All places are now prefetched, so no remaining places
+      return 0;
+    },
+    totalFilteredPlacesCount(): number {
+      // Return total count of places after applying all filters (for display purposes)
+      return this.filteredPlaces.length;
     },
   },
   actions: {
     setQuery(q: string) {
       this.searchQuery = q;
-      this.page = 1;
     },
     setDistance(m: number | null) {
       this.distanceMiles = m;
-      this.page = 1;
     },
     async toggleInterest(tag: string) {
       this.selectedInterests = this.selectedInterests.includes(tag)
         ? this.selectedInterests.filter((t) => t !== tag)
         : [...this.selectedInterests, tag];
-      this.page = 1;
       // Refresh places when interests change to apply server-side filtering
       if (this.userLocation) {
         await this.fetchPlaces();
@@ -186,7 +201,6 @@ export const usePlacesStore = defineStore('places', {
     },
     setHiddenGems(b: boolean) {
       this.showHiddenGems = b;
-      this.page = 1;
     },
     setUserLocation(loc: { lat: number; lng: number } | null) {
       this.userLocation = loc;
@@ -194,18 +208,45 @@ export const usePlacesStore = defineStore('places', {
     selectPlace(id: string | null) {
       this.selectedPlaceId = id;
     },
-    setPage(n: number) {
-      this.page = n;
-    },
     setViewportBounds(bounds: ViewportBounds) {
       this.viewportBounds = bounds;
-      // Reset to first page when viewport changes
-      this.page = 1;
     },
 
 
     /**
-     * Fetch places from the API based on user location and radius
+     * Check if cached data is still valid (less than 5 minutes old)
+     */
+    isCacheValid(): boolean {
+      if (!this.cacheTimestamp || this.cachedPlaces.length === 0) return false;
+      const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
+      return Date.now() - this.cacheTimestamp < fiveMinutes;
+    },
+
+    /**
+     * Load places from cache if available and valid
+     */
+    loadFromCache(): boolean {
+      if (this.isCacheValid()) {
+        this.places = [...this.cachedPlaces];
+        this.loadedPlaceIds = this.cachedPlaces.map(p => p.id);
+        this.initialPlacesLoaded = true;
+        this.isLoading = false;
+        this.loadingProgress = 100;
+        return true;
+      }
+      return false;
+    },
+
+    /**
+     * Cache the current places data
+     */
+    cachePlaces() {
+      this.cachedPlaces = [...this.places];
+      this.cacheTimestamp = Date.now();
+    },
+
+    /**
+     * Fetch all places with complete data before rendering
      */
     async fetchPlaces() {
       if (!this.userLocation) {
@@ -213,18 +254,23 @@ export const usePlacesStore = defineStore('places', {
         return;
       }
 
+      // Try to load from cache first
+      if (this.loadFromCache()) {
+        return;
+      }
+
       this.isLoading = true;
       this.error = null;
+      this.initialPlacesLoaded = false;
+      this.backgroundLoading = false;
 
       try {
-        // Convert miles to kilometers for API (1 mile = 1.60934 km)
-        // Use a much larger radius to preload more places (Zillow-style)
-        // The viewport filtering will then show only what's visible
-        const radiusKm = 100; // Fixed 100km radius to get plenty of places
-        
         // Get place IDs from MongoDB
+        this.loadingProgress = 10;
         
+        const radiusKm = 100; // Large radius to get plenty of places
         let placeIds: string[] = [];
+        
         try {
           placeIds = await placeCatalogService.getPlacesInArea({
             centerLat: this.userLocation.lat,
@@ -232,7 +278,6 @@ export const usePlacesStore = defineStore('places', {
             radius: radiusKm,
           });
         } catch (apiError: any) {
-          // If the API fails, show a helpful error message
           if (apiError.response?.data?.error?.includes('unexpected end of file')) {
             this.error = 'Database connection issue. Please try again later.';
             return;
@@ -242,31 +287,15 @@ export const usePlacesStore = defineStore('places', {
           }
         }
         
-        // If no places found, try with a larger radius to ensure we get some results
         if (placeIds.length === 0) {
-          const largerRadius = Math.max(radiusKm * 3, 100); // At least 100km radius
-          
-          try {
-            placeIds = await placeCatalogService.getPlacesInArea({
-              centerLat: this.userLocation.lat,
-              centerLng: this.userLocation.lng,
-              radius: largerRadius,
-            });
-            
-            if (placeIds.length === 0) {
-              this.error = 'No places found in the area. Please try a different location.';
-              return;
-            }
-          } catch (retryError: any) {
-            this.error = 'Unable to fetch places from database. Please try again later.';
-            return;
-          }
+          this.error = 'No places found in the area. Please try a different location.';
+          return;
         }
 
-        // Store all place IDs for potential future loading
         this.allPlaceIds = placeIds;
+        this.loadingProgress = 20;
 
-        // If user has selected interests, use InterestFilter API to get matching places
+        // Apply interest filtering if needed
         const authStore = useAuthStore();
         let filteredPlaceIds = placeIds;
         if (this.selectedInterests.length > 0 && authStore.isAuthenticated && authStore.user) {
@@ -282,78 +311,91 @@ export const usePlacesStore = defineStore('places', {
 
         if (filteredPlaceIds.length === 0) {
           this.places = [];
+          this.isLoading = false;
           return;
         }
 
-        // Preload more places for Zillow-style viewport filtering
-        // Load up to 200 places initially so we have good coverage
-        const maxPlacesToFetch = Math.min(200, filteredPlaceIds.length);
-        const limitedPlaceIds = filteredPlaceIds.slice(0, maxPlacesToFetch);
+        this.loadingProgress = 30;
 
-        // Fetch details for limited places in batches to prevent resource exhaustion
-        const batchSize = 10;
-        const placeDetailsResponses: any[] = [];
+        // Load ALL places with complete data (including media) before showing anything
+        const allPlacesWithMedia = await this.loadPlacesBatch(filteredPlaceIds, true);
         
-        for (let i = 0; i < limitedPlaceIds.length; i += batchSize) {
-          const batch = limitedPlaceIds.slice(i, i + batchSize);
-          
-          try {
-            const batchResponses = await Promise.all(
-              batch.map(placeId => placeCatalogService.getPlaceDetails(placeId))
-            );
-            placeDetailsResponses.push(...batchResponses);
-            
-            // Add a small delay between batches to prevent overwhelming the server
-            if (i + batchSize < limitedPlaceIds.length) {
-              await new Promise(resolve => setTimeout(resolve, 100));
-            }
-          } catch (error) {
-            // Continue with other batches even if one fails
-          }
-        }
-
-        // Fetch media for each place (also in batches to prevent resource exhaustion)
-        const placesWithMedia: Place[] = [];
-        const mediaBatchSize = 5;
+        // Only show places after ALL data is loaded
+        this.places = allPlacesWithMedia;
+        this.loadedPlaceIds = filteredPlaceIds;
+        this.initialPlacesLoaded = true;
+        this.loadingProgress = 100;
+        this.isLoading = false;
         
-        for (let i = 0; i < placeDetailsResponses.length; i += mediaBatchSize) {
-          const batch = placeDetailsResponses.slice(i, i + mediaBatchSize);
-          
-          const batchPlaces = await Promise.all(
-            batch.map(async (response) => {
-              try {
-                // Get media URLs for this place
-                const mediaUrls = await mediaLibraryService.getMediaUrlsByPlace(response.place.id);
-                return convertPlaceDetailsToPlace(response.place, mediaUrls);
-              } catch (error) {
-                // If media fetch fails, continue with empty media
-                return convertPlaceDetailsToPlace(response.place, []);
-              }
-            })
-          );
-          
-          placesWithMedia.push(...batchPlaces);
-          
-          // Add a small delay between media batches
-          if (i + mediaBatchSize < placeDetailsResponses.length) {
-            await new Promise(resolve => setTimeout(resolve, 50));
-          }
-        }
-
-        this.places = placesWithMedia;
-        this.loadedPlaceIds = limitedPlaceIds;
+        console.log('Places loaded successfully:', this.places.length);
+        console.log('First few places:', this.places.slice(0, 3).map(p => ({ id: p.id, name: p.name, lat: p.location.lat, lng: p.location.lng })));
+        
+        // Cache the loaded places for future visits
+        this.cachePlaces();
+        
       } catch (error: any) {
         this.error = error.response?.data?.error || 'Failed to fetch places';
         
-        // Check if it's a network error
         if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
           this.error = 'Cannot connect to backend server. Please ensure the backend is running on port 8000.';
         }
         
         this.places = [];
-      } finally {
         this.isLoading = false;
+        this.backgroundLoading = false;
       }
+    },
+
+    /**
+     * Load a batch of places with media loading and progress updates
+     */
+    async loadPlacesBatch(placeIds: string[], loadMedia: boolean): Promise<Place[]> {
+      if (placeIds.length === 0) return [];
+
+      const batchSize = loadMedia ? 10 : 20; // Optimized batch sizes
+      const places: Place[] = [];
+      const totalBatches = Math.ceil(placeIds.length / batchSize);
+      
+      for (let i = 0; i < placeIds.length; i += batchSize) {
+        const batch = placeIds.slice(i, i + batchSize);
+        const currentBatch = Math.floor(i / batchSize);
+        
+        const batchPlaces = await Promise.all(
+          batch.map(async (placeId) => {
+            try {
+              const response = await placeCatalogService.getPlaceDetails(placeId);
+              let mediaUrls: string[] = [];
+              
+              if (loadMedia) {
+                try {
+                  mediaUrls = await mediaLibraryService.getMediaUrlsByPlace(placeId);
+                } catch (error) {
+                  // Continue with empty media if fetch fails
+                }
+              }
+              
+              return convertPlaceDetailsToPlace(response.place, mediaUrls);
+            } catch (error) {
+              // Skip places that fail to load
+              return null;
+            }
+          })
+        );
+        
+        // Filter out null results and add to places array
+        const validPlaces = batchPlaces.filter((place): place is Place => place !== null);
+        places.push(...validPlaces);
+        
+        // Update progress (30% to 95% for place loading)
+        this.loadingProgress = 30 + (currentBatch / totalBatches) * 65;
+        
+        // Small delay only for media loading to prevent overwhelming the server
+        if (loadMedia && i + batchSize < placeIds.length) {
+          await new Promise(resolve => setTimeout(resolve, 30));
+        }
+      }
+      
+      return places;
     },
 
     /**
@@ -519,6 +561,7 @@ export const usePlacesStore = defineStore('places', {
       this.isLoading = true;
       await this.fetchPlaces();
     },
+
 
     /**
      * Initialize the store with data

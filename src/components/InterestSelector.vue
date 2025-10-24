@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { Sparkles, Plus, X, Wand2, Tag, ChevronDown } from 'lucide-vue-next';
 import { interestFilterService } from '@/lib/api/services/interestFilter';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -14,6 +14,29 @@ const emit = defineEmits<{
   (e: 'tagsGenerated', tags: string[]): void;
 }>();
 
+// Fallback tags for now
+const tagOptions = [
+  { tag: 'cafe', description: 'Coffee shops and cafés' },
+  { tag: 'restaurant', description: 'Restaurants and dining establishments' },
+  { tag: 'bar', description: 'Bars and pubs' },
+  { tag: 'museum', description: 'Museums and galleries' },
+  { tag: 'library', description: 'Libraries and reading spaces' },
+  { tag: 'entertainment', description: 'Theaters, cinemas, and entertainment venues' },
+  { tag: 'park', description: 'Parks and gardens' },
+  { tag: 'playground', description: 'Playgrounds and play areas' },
+  { tag: 'nature_reserve', description: 'Nature reserves and protected areas' },
+];
+
+function formatTagDisplay(tag: string): string {
+  return tag
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+// Use fallback tags as the available tags
+const effectiveAvailableTags = computed(() => props.availableTags || tagOptions.map(t => t.tag));
+
 // Auth store
 const authStore = useAuthStore();
 
@@ -24,12 +47,14 @@ const isGenerating = ref(false);
 const showManualMode = ref(false);
 const apiError = ref<string | null>(null);
 
+// No need to load tags on mount since we're using fallback
+
 // Computed properties
 const displayText = computed(() => {
   if (props.selectedTags.length === 0) {
-    return 'Interests';
+    return 'Categories';
   } else if (props.selectedTags.length === 1) {
-    return props.selectedTags[0];
+    return formatTagDisplay(props.selectedTags[0]);
   } else {
     return `${props.selectedTags.length} selected`;
   }
@@ -82,7 +107,6 @@ async function generateTags() {
   apiError.value = null;
   
   try {
-    
     // Clear existing tags when generating new ones
     emit('update:selectedTags', []);
     
@@ -94,35 +118,27 @@ async function generateTags() {
       // locationHint: 'Boston, MA'
     });
     
+    // Use the tags directly from the API response
+    const generatedTags = response.tags;
     
-    // Filter tags to only include those in availableTags (if provided)
-    let validTags = response.tags;
-    if (props.availableTags && props.availableTags.length > 0) {
-      validTags = response.tags.filter(tag => props.availableTags!.includes(tag));
-    }
-    
-    // Add all valid tags (no need to filter against current since we cleared them)
-    if (validTags.length > 0) {
-      emit('update:selectedTags', validTags);
+    // Add all generated tags
+    if (generatedTags.length > 0) {
+      emit('update:selectedTags', generatedTags);
       
       // Auto-apply tags and trigger search
-      emit('tagsGenerated', validTags);
+      emit('tagsGenerated', generatedTags);
       
       // Close modal automatically after successful generation
       showModal.value = false;
       descriptionInput.value = '';
       showManualMode.value = false;
       apiError.value = null;
-    } else if (response.tags.length === 0) {
+    } else {
       apiError.value = 'No relevant tags found for your description. Try being more specific or use manual selection.';
-    } else if (validTags.length === 0) {
-      apiError.value = 'Generated tags don\'t match available options. Try manual selection.';
     }
     
     // Show success feedback
     showManualMode.value = true;
-    
-    // Log confidence and rationale for debugging
     
   } catch (error: any) {
     apiError.value = error.response?.data?.error || error.message || 'Failed to generate tags';
@@ -238,20 +254,21 @@ function toggleManualMode() {
           <!-- Manual Tag Selection Section -->
           <div v-if="showManualMode" class="space-y-4">
             <div class="space-y-3">
-              <h3 class="text-sm font-medium text-gray-700">Select from available tags</h3>
-              <div class="flex flex-wrap gap-2">
+              <h3 class="text-sm font-medium text-gray-700">Select from available categories</h3>
+              <div class="max-h-64 overflow-y-auto space-y-2 pr-2">
                 <button
-                  v-for="tag in availableTags"
-                  :key="tag"
-                  @click="toggleTag(tag)"
+                  v-for="option in tagOptions"
+                  :key="option.tag"
+                  @click="toggleTag(option.tag)"
                   :class="[
-                    'px-3 py-2 text-sm rounded-full transition-all duration-200',
-                    selectedTags.includes(tag)
-                      ? 'bg-blue-500 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'
+                    'w-full text-left px-3 py-2.5 rounded-lg transition-all duration-200 border',
+                    selectedTags.includes(option.tag)
+                      ? 'bg-blue-50 border-blue-200 text-blue-900 shadow-sm'
+                      : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300'
                   ]"
                 >
-                  {{ tag }}
+                  <div class="font-medium text-sm">{{ formatTagDisplay(option.tag) }}</div>
+                  <div class="text-xs text-gray-500 mt-0.5">{{ option.description }}</div>
                 </button>
               </div>
             </div>
@@ -277,7 +294,7 @@ function toggleManualMode() {
           <!-- Selected Tags Display -->
           <div v-if="hasSelectedTags" class="space-y-3">
             <div class="flex items-center justify-between">
-              <h3 class="text-sm font-medium text-gray-700">Selected Tags</h3>
+              <h3 class="text-sm font-medium text-gray-700">Selected Categories</h3>
               <span class="text-xs text-gray-500">{{ selectedTags.length }} selected</span>
             </div>
             <div class="flex flex-wrap gap-2">
@@ -286,7 +303,7 @@ function toggleManualMode() {
                 :key="tag"
                 class="inline-flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 text-sm rounded-full border border-blue-200"
               >
-                {{ tag }}
+                {{ formatTagDisplay(tag) }}
                 <button
                   @click="removeTag(tag)"
                   class="hover:bg-blue-100 rounded-full p-0.5 transition-colors"

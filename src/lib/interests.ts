@@ -1,38 +1,7 @@
 /**
- * Available interest tags for places
+ * Interest and category management is now handled by the API
+ * This file only contains distance-related constants
  */
-export type Tag =
-  | "quiet_spaces"
-  | "waterfront_views"
-  | "nature_walks"
-  | "sunset_spots"
-  | "not_crowded"
-  | "short_drive"
-  | "instagram_worthy"
-  | "lively_nightlife"
-  | "live_music"
-  | "historic_charms"
-  | "family_friendly"
-  | "coffee_nooks"
-  | "scenic_overlook";
-
-export const INTERESTS: Tag[] = [
-  "quiet_spaces",
-  "waterfront_views", 
-  "nature_walks",
-  "sunset_spots",
-  "not_crowded",
-  "short_drive",
-  "instagram_worthy",
-  "lively_nightlife",
-  "live_music",
-  "historic_charms",
-  "family_friendly",
-  "coffee_nooks",
-  "scenic_overlook"
-];
-
-export type InterestTag = Tag;
 
 /**
  * Distance filter options in miles

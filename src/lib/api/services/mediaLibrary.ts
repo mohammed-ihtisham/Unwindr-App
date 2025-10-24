@@ -86,9 +86,27 @@ export const mediaLibraryService = {
         'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400',
         'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=400',
       ],
+      '019a07e3-e343-7bed-9104-5abb3f2a0390': [ // Place with missing image
+        'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800',
+        'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
+        'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800',
+      ],
     };
 
-    return mediaUrlMap[placeId] || [];
+    // Check if we have a specific mapping for this place
+    if (mediaUrlMap[placeId]) {
+      return mediaUrlMap[placeId];
+    }
+
+    // If no specific mapping, provide generic images
+    // This ensures all places have at least some images
+    return [
+      'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800',
+      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
+      'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800',
+      'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800',
+      'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800',
+    ];
   },
 };
 
