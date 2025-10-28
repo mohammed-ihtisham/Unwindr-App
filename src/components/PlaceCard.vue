@@ -136,7 +136,7 @@ async function handleLike() {
           ]"
         />
       </div>
-
+      
       <!-- Heart Icon (Save) -->
       <button
         @click.stop="handleLike"

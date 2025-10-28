@@ -41,7 +41,7 @@ onMounted(() => {
   // Initialize map
   map = L.map(mapContainer.value, {
     center: [props.center.lat, props.center.lng],
-    zoom: 13,
+    zoom: 16, // Start more zoomed in so initial places load immediately
   });
 
   // Add tile layer
@@ -56,8 +56,10 @@ onMounted(() => {
   // Initial markers
   updateMarkers();
   
-  // Emit initial viewport bounds
-  emitViewportBounds();
+  // Emit initial viewport bounds after a short delay to ensure map is fully initialized
+  setTimeout(() => {
+    emitViewportBounds();
+  }, 100);
 });
 
 onBeforeUnmount(() => {
@@ -78,11 +80,11 @@ watch(
 
 watch(
   () => props.selectedId,
-  (newId) => {
-    if (newId && map) {
+  (newId, oldId) => {
+    if (newId && map && newId !== oldId) {
+      // Zoom to selected marker when user clicks on it
       const marker = props.markers.find((m) => m.id === newId);
       if (marker) {
-        // Always zoom in to the selected marker with a consistent zoom level
         map.setView([marker.lat, marker.lng], 16, { animate: true });
       }
     }
@@ -90,14 +92,15 @@ watch(
   }
 );
 
-watch(
-  () => props.center,
-  (newCenter) => {
-    if (map && newCenter) {
-      map.setView([newCenter.lat, newCenter.lng], map.getZoom());
-    }
-  }
-);
+// Removed auto-following center changes to keep viewport stable during loading
+// watch(
+//   () => props.center,
+//   (newCenter) => {
+//     if (map && newCenter) {
+//       map.setView([newCenter.lat, newCenter.lng], map.getZoom());
+//     }
+//   }
+// );
 
 function updateMarkers() {
   if (!map) return;
@@ -144,10 +147,8 @@ function updateMarkers() {
 
   updateMarkerStyles();
   
-  // Only auto-fit to markers if user hasn't manually interacted with markers
-  if (!isUserInteracting.value) {
-    fitToMarkers();
-  }
+  // Don't auto-fit to markers - let user control viewport
+  // fitToMarkers() is available for manual use via exposed method
 }
 
 function updateMarkerStyles() {
@@ -193,8 +194,8 @@ function fitToMarkers() {
 
   const bounds = L.latLngBounds(props.markers.map((m) => [m.lat, m.lng]));
   
-  // If we have many markers, use a reasonable max zoom to avoid being too zoomed in
-  const maxZoom = props.markers.length > 20 ? 12 : 14;
+  // Use a more zoomed-in max zoom so images start loading for visible places
+  const maxZoom = props.markers.length > 20 ? 15 : 16;
   
   map.fitBounds(bounds, { 
     padding: [50, 50], 

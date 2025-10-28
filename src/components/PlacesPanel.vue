@@ -106,7 +106,7 @@ defineExpose({
         <div>
           <h2 class="text-2xl font-semibold text-gray-900">Places</h2>
           <p class="text-sm text-gray-500 mt-1">
-            {{ places.length }} {{ places.length === 1 ? 'place' : 'places' }} in this area
+            {{ places.length }} {{ places.length === 1 ? 'place' : 'places' }} showing
           </p>
         </div>
         <div class="text-sm text-gray-500">
@@ -180,7 +180,7 @@ defineExpose({
     >
       <div class="text-center text-gray-500">
         <p class="text-lg font-medium mb-1">No places in this area</p>
-        <p class="text-sm">Try zooming out or moving the map to explore more areas</p>
+        <p class="text-sm">Try adjusting your search criteria or viewing more of the map</p>
       </div>
     </div>
 

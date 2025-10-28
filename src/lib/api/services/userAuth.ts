@@ -40,7 +40,7 @@ export const userAuthService = {
     
     return response;
   },
-
+  
   /**
    * Login and get a session token
    */

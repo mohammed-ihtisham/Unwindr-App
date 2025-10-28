@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, nextTick, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { usePlacesStore, type ViewportBounds } from '@/stores/usePlacesStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { useEngagement } from '@/composables/useEngagement';
 import SearchBar from '@/components/SearchBar.vue';
 import FilterChips from '@/components/FilterChips.vue';
@@ -15,6 +16,7 @@ import AuthModal from '@/components/AuthModal.vue';
 import PlaceDetailModal from '@/components/PlaceDetailModal.vue';
 
 const placesStore = usePlacesStore();
+const authStore = useAuthStore();
 const { recordLike } = useEngagement();
 const {
   searchQuery,
@@ -23,6 +25,7 @@ const {
   showHiddenGems,
   userLocation,
   allPlaces,
+  filteredPlaces,
   selectedPlaceId,
   modalOpen,
   modalPlaceId,
@@ -34,46 +37,58 @@ const {
   loadingProgress,
   initialPlacesLoaded,
   backgroundLoading,
+  hasActiveFilters,
 } = storeToRefs(placesStore);
 
-// Auth modal state
+// Auth modal state - only show when user clicks login
 const showAuthModal = ref(false);
 
 // Map component reference
 const mapCanvasRef = ref<InstanceType<typeof MapCanvas> | null>(null);
 
-// Initialize data on mount
-onMounted(async () => {
-  // Use real API with proper seeding
-  await placesStore.initialize();
+// Close modal automatically when user becomes authenticated
+watch(() => authStore.isAuthenticated, (isAuthenticated) => {
+  if (isAuthenticated) {
+    showAuthModal.value = false;
+  }
 });
 
-// Watch for changes in places and fit map to markers
+// Initialize data on mount
+onMounted(async () => {
+  // Initialize auth first
+  await authStore.initialize();
+  
+  // Request user location and set default if needed
+  // Don't auto-load all places - wait for viewport bounds
+});
+
+// Don't auto-fit to markers during viewport loading
+// This keeps the viewport stable while data loads in background
+
+// Watch for filter changes to update display (no need to refetch from server)
 watch(
-  () => places.value.length,
-  async (newLength, oldLength) => {
-    // Only fit to markers if we have places and the map is ready
-    if (newLength > 0 && mapCanvasRef.value && newLength !== oldLength) {
-      await nextTick();
-      mapCanvasRef.value.fitToMarkers();
-    }
-  }
+  () => [searchQuery.value, selectedInterests.value, distanceMiles.value, showHiddenGems.value],
+  () => {
+    // Filtering happens client-side via the filteredPlaces getter
+    // No need to refetch from server
+  },
+  { deep: true }
 );
 
-// Map center follows user location or defaults to first place
+// Map center follows user location or defaults to first filtered place
 const mapCenter = computed(() => {
   if (userLocation.value) {
     return userLocation.value;
   }
-  if (places.value.length > 0) {
-    return places.value[0].location;
+  if (filteredPlaces.value.length > 0) {
+    return filteredPlaces.value[0].location;
   }
   return { lat: 42.3601, lng: -71.0589 }; // Boston, MA (where places are seeded)
 });
 
-// Map markers from ALL loaded places (not just paginated ones)
+// Map markers from filtered places (only show places that match active filters)
 const mapMarkers = computed(() => {
-  return places.value.map((place) => ({
+  return filteredPlaces.value.map((place) => ({
     id: place.id,
     lat: place.location.lat,
     lng: place.location.lng,
@@ -106,25 +121,30 @@ function handleTagsGenerated() {
 
 async function handleLoadMore() {
   await placesStore.loadMorePlaces();
-  // Fit map to show all markers after loading more places
-  if (mapCanvasRef.value) {
-    // Use nextTick to ensure the map markers have been updated
-    await nextTick();
-    mapCanvasRef.value.fitToMarkers();
-  }
+  // Don't change viewport when loading more places
+  // Let user zoom/pan naturally while data loads
 }
 
 function handleRetry() {
   placesStore.retryFetchPlaces();
 }
 
-function handleViewportChange(bounds: ViewportBounds) {
+async function handleViewportChange(bounds: ViewportBounds) {
   placesStore.setViewportBounds(bounds);
+  
+  // Load places for this viewport with preview images
+  await placesStore.loadPlacesInViewport(bounds, true);
 }
 </script>
 
 <template>
-  <div class="flex flex-col h-screen bg-white">
+  <div class="flex flex-col h-screen bg-white" :class="{ 'overflow-hidden': showAuthModal }">
+    <!-- Blur overlay when auth modal is open -->
+    <div 
+      v-if="showAuthModal && !authStore.isAuthenticated" 
+      class="fixed inset-0 backdrop-blur-sm bg-black/20 z-[9998]"
+    ></div>
+    
     <!-- Top Bar -->
     <header class="flex-shrink-0 border-b border-gray-200 bg-white">
       <!-- Main Header -->
@@ -192,6 +212,29 @@ function handleViewportChange(bounds: ViewportBounds) {
           @marker-click="handleMarkerClick"
           @viewport-change="handleViewportChange"
         />
+        
+
+        <!-- Error overlay -->
+        <div 
+          v-if="error && !isLoading"
+          class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-20"
+        >
+          <div class="text-center max-w-md mx-6">
+            <div class="w-16 h-16 bg-red-100 rounded-2xl mx-auto mb-6 flex items-center justify-center">
+              <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Connection Issue</h3>
+            <p class="text-gray-600 mb-6">{{ error }}</p>
+            <button
+              @click="handleRetry"
+              class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-md hover:shadow-lg"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Places Panel -->
@@ -216,7 +259,10 @@ function handleViewportChange(bounds: ViewportBounds) {
     </div>
 
     <!-- Auth Modal -->
-    <AuthModal :show="showAuthModal" @close="showAuthModal = false" />
+    <AuthModal 
+      :show="showAuthModal && !authStore.isAuthenticated" 
+      @close="showAuthModal = false" 
+    />
 
     <!-- Place Detail Modal -->
     <PlaceDetailModal

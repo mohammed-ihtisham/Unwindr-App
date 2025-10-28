@@ -77,12 +77,6 @@
                           @click="openFullGallery"
                         />
                       </div>
-                      <div
-                        v-else
-                        class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600"
-                      >
-                        <MapPin :size="48" class="text-white opacity-50" />
-                      </div>
                     </div>
 
                     <!-- Middle Column (2 vertically stacked) -->

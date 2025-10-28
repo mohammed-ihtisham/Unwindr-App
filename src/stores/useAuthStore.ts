@@ -37,7 +37,8 @@ export const useAuthStore = defineStore('auth', {
         // Auto-login after registration
         return await this.login(username, password);
       } catch (error: any) {
-        this.error = error.response?.data?.error || error.message || 'Registration failed';
+        console.error('Registration error:', error);
+        this.error = error.message || 'Registration failed';
         return false;
       } finally {
         this.isLoading = false;
@@ -57,7 +58,8 @@ export const useAuthStore = defineStore('auth', {
         await this.fetchUser();
         return true;
       } catch (error: any) {
-        this.error = error.response?.data?.error || error.message || 'Login failed';
+        console.error('Login error:', error);
+        this.error = error.message || 'Login failed';
         return false;
       } finally {
         this.isLoading = false;
@@ -75,7 +77,8 @@ export const useAuthStore = defineStore('auth', {
         await userAuthService.logout();
         this.user = null;
       } catch (error: any) {
-        this.error = error.response?.data?.error || 'Logout failed';
+        console.error('Logout error:', error);
+        this.error = error.message || 'Logout failed';
         // Clear user anyway on logout error
         this.user = null;
       } finally {
@@ -94,7 +97,8 @@ export const useAuthStore = defineStore('auth', {
         const response = await userAuthService.getAuthenticatedUser();
         this.user = response.userProfile || null;
       } catch (error: any) {
-        this.error = error.response?.data?.error || 'Failed to fetch user';
+        console.error('Fetch user error:', error);
+        this.error = error.message || 'Failed to fetch user';
         this.user = null;
       } finally {
         this.isLoading = false;
@@ -112,7 +116,8 @@ export const useAuthStore = defineStore('auth', {
         await userAuthService.changePassword(oldPassword, newPassword);
         return true;
       } catch (error: any) {
-        this.error = error.response?.data?.error || 'Password change failed';
+        console.error('Change password error:', error);
+        this.error = error.message || 'Password change failed';
         return false;
       } finally {
         this.isLoading = false;

@@ -161,6 +161,23 @@ export interface GetPlacesInAreaResponse {
   places: ID[];
 }
 
+export interface GetPlacesInViewportRequest {
+  southLat: number;
+  westLng: number;
+  northLat: number;
+  eastLng: number;
+}
+
+export interface ViewportPlace {
+  id: ID;
+  name: string;
+  category: string;
+  lat: number;
+  lng: number;
+}
+
+export interface GetPlacesInViewportResponse extends Array<ViewportPlace> {}
+
 export interface GetPlaceDetailsRequest {
   placeId: ID;
 }
@@ -222,6 +239,32 @@ export interface GetMediaByPlaceRequest {
 export interface GetMediaByPlaceResponse {
   mediaIds: ID;
 }
+
+export interface GetMediaItemsByPlaceRequest {
+  placeId: ID;
+}
+
+export interface MediaItem {
+  _id: ID;
+  placeId: ID;
+  contributorId: ID | null;
+  createdAt: string;
+  imageUrl: string;
+  source: string;
+}
+
+export interface GetMediaItemsByPlaceResponse extends Array<MediaItem> {}
+
+export interface GetPreviewImagesForPlacesRequest {
+  placeIds: ID[];
+}
+
+export interface PlacePreviewImage {
+  placeId: ID;
+  previewImage: string | null;
+}
+
+export interface GetPreviewImagesForPlacesResponse extends Array<PlacePreviewImage> {}
 
 // ============================================================================
 // MediaAnalytics Types

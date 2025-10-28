@@ -334,6 +334,66 @@
 
 **Request Body:**
 ```json
+{}
+```
+
+**Success Response Body (Action):**
+```json
+{}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
+### POST /api/PlaceCatalog/bulkImportOSMPlaces
+
+**Description:** imports places from OSM data file.
+
+**Requirements:**
+- osmDataPath is valid file path
+
+**Effects:**
+- imports places from OSM data file into the database.
+
+**Request Body:**
+```json
+{
+  "osmDataPath": "string"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
+### POST /api/PlaceCatalog/checkAreaCoverage
+
+**Description:** checks if an area has sufficient place coverage.
+
+**Requirements:**
+- coordinates are valid and radius > 0
+
+**Effects:**
+- returns coverage information for the specified area.
+
+**Request Body:**
+```json
 {
   "centerLat": "number",
   "centerLng": "number",
@@ -343,7 +403,10 @@
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "hasCoverage": "boolean",
+  "placeCount": "number"
+}
 ```
 
 **Error Response Body:**
@@ -689,6 +752,46 @@
 [
   {
     "mediaIds": "string"
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
+### POST /api/MediaLibrary/getMediaItemsByPlace
+
+**Description:** Retrieves all media items associated with a specific place with their full data including image URLs, ordered by their creation date in descending order.
+
+**Requirements:**
+- placeId provided
+
+**Effects:**
+- returns full media items with image URLs ordered by createdAt desc
+
+**Request Body:**
+```json
+{
+  "placeId": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "_id": "string",
+    "placeId": "string",
+    "contributorId": "string | null",
+    "createdAt": "string (ISO date)",
+    "imageUrl": "string",
+    "source": "string"
   }
 ]
 ```

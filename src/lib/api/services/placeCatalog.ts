@@ -16,6 +16,8 @@ import type {
   UpdatePlaceResponse,
   GetPlacesInAreaRequest,
   GetPlacesInAreaResponse,
+  GetPlacesInViewportRequest,
+  GetPlacesInViewportResponse,
   GetPlaceDetailsRequest,
   GetPlaceDetailsResponse,
   ID,
@@ -75,6 +77,17 @@ export const placeCatalogService = {
       { placeId }
     );
     // API returns the response directly, not in an array
+    return response;
+  },
+
+  /**
+   * Get places in viewport (optimized for viewport-based lazy loading)
+   */
+  async getPlacesInViewport(data: GetPlacesInViewportRequest): Promise<GetPlacesInViewportResponse> {
+    const response = await apiClient.post<GetPlacesInViewportResponse>(
+      API_ENDPOINTS.placeCatalog.getPlacesInViewport,
+      data
+    );
     return response;
   },
 

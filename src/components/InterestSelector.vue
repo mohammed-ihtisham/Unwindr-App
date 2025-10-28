@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { Sparkles, Plus, X, Wand2, Tag, ChevronDown } from 'lucide-vue-next';
 import { interestFilterService } from '@/lib/api/services/interestFilter';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useInterests } from '@/composables/useInterests';
 
 const props = defineProps<{
   selectedTags: string[];
@@ -14,28 +15,11 @@ const emit = defineEmits<{
   (e: 'tagsGenerated', tags: string[]): void;
 }>();
 
-// Fallback tags for now
-const tagOptions = [
-  { tag: 'cafe', description: 'Coffee shops and cafés' },
-  { tag: 'restaurant', description: 'Restaurants and dining establishments' },
-  { tag: 'bar', description: 'Bars and pubs' },
-  { tag: 'museum', description: 'Museums and galleries' },
-  { tag: 'library', description: 'Libraries and reading spaces' },
-  { tag: 'entertainment', description: 'Theaters, cinemas, and entertainment venues' },
-  { tag: 'park', description: 'Parks and gardens' },
-  { tag: 'playground', description: 'Playgrounds and play areas' },
-  { tag: 'nature_reserve', description: 'Nature reserves and protected areas' },
-];
-
-function formatTagDisplay(tag: string): string {
-  return tag
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
+// Use the composable to get tags from API
+const { tagOptions, formatTagDisplay, loadAvailableTags, isLoading: isLoadingTags } = useInterests();
 
 // Use fallback tags as the available tags
-const effectiveAvailableTags = computed(() => props.availableTags || tagOptions.map(t => t.tag));
+const effectiveAvailableTags = computed(() => props.availableTags || tagOptions.value.map(t => t.tag));
 
 // Auth store
 const authStore = useAuthStore();
@@ -47,7 +31,10 @@ const isGenerating = ref(false);
 const showManualMode = ref(false);
 const apiError = ref<string | null>(null);
 
-// No need to load tags on mount since we're using fallback
+// Load tags from API on mount
+onMounted(async () => {
+  await loadAvailableTags();
+});
 
 // Computed properties
 const displayText = computed(() => {
@@ -255,7 +242,17 @@ function toggleManualMode() {
           <div v-if="showManualMode" class="space-y-4">
             <div class="space-y-3">
               <h3 class="text-sm font-medium text-gray-700">Select from available categories</h3>
-              <div class="max-h-64 overflow-y-auto space-y-2 pr-2">
+              
+              <!-- Loading state -->
+              <div v-if="isLoadingTags" class="flex items-center justify-center py-8">
+                <div class="text-center">
+                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                  <p class="text-sm text-gray-500">Loading categories...</p>
+                </div>
+              </div>
+              
+              <!-- Categories list -->
+              <div v-else class="max-h-64 overflow-y-auto space-y-2 pr-2">
                 <button
                   v-for="option in tagOptions"
                   :key="option.tag"

@@ -80,16 +80,64 @@ class ApiClient {
    * Make a POST request
    */
   async post<T>(url: string, data?: any): Promise<T> {
-    const response = await this.client.post<T>(url, data);
-    return response.data;
+    try {
+      const response = await this.client.post<T>(url, data);
+      return response.data;
+    } catch (error: any) {
+      // Log the error for debugging
+      console.error('API POST error:', {
+        url,
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        code: error.code,
+      });
+      
+      // For HTTP errors (4xx, 5xx), return the response data
+      // This allows services to check for error fields in the response
+      if (error.response?.status) {
+        return error.response.data;
+      }
+      
+      // For network errors, timeout, or other issues
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        throw new Error('Request timed out. Please check if the backend server is running.');
+      }
+      
+      throw error;
+    }
   }
 
   /**
    * Make a GET request
    */
   async get<T>(url: string, params?: any): Promise<T> {
-    const response = await this.client.get<T>(url, { params });
-    return response.data;
+    try {
+      const response = await this.client.get<T>(url, { params });
+      return response.data;
+    } catch (error: any) {
+      // Log the error for debugging
+      console.error('API GET error:', {
+        url,
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        code: error.code,
+      });
+      
+      // For HTTP errors (4xx, 5xx), return the response data
+      // This allows services to check for error fields in the response
+      if (error.response?.status) {
+        return error.response.data;
+      }
+      
+      // For network errors, timeout, or other issues
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        throw new Error('Request timed out. Please check if the backend server is running.');
+      }
+      
+      throw error;
+    }
   }
 
   /**

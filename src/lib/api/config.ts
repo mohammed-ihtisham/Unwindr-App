@@ -32,6 +32,7 @@ export const API_ENDPOINTS = {
     updatePlace: '/api/PlaceCatalog/updatePlace',
     getPlacesInArea: '/api/PlaceCatalog/_getPlacesInArea',
     getPlaceDetails: '/api/PlaceCatalog/_getPlaceDetails',
+    getPlacesInViewport: '/api/PlaceCatalog/getPlacesInViewport',
   },
   // MediaLibrary
   mediaLibrary: {
@@ -39,6 +40,8 @@ export const API_ENDPOINTS = {
     addMedia: '/api/MediaLibrary/addMedia',
     deleteMedia: '/api/MediaLibrary/deleteMedia',
     getMediaByPlace: '/api/MediaLibrary/_getMediaByPlace',
+    getMediaItemsByPlace: '/api/MediaLibrary/getMediaItemsByPlace',
+    getPreviewImagesForPlaces: '/api/MediaLibrary/getPreviewImagesForPlaces',
   },
   // MediaAnalytics
   mediaAnalytics: {
