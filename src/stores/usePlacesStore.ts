@@ -11,6 +11,7 @@ export type Place = {
   hiddenGem: boolean;
   location: { lat: number; lng: number };
   images: string[];
+  imagesUrl?: string; // External gallery link (e.g., Google Images)
   likes: number;
   distanceMilesFromUser?: number;
 };
@@ -62,6 +63,7 @@ function convertPlaceDetailsToPlace(details: PlaceDetails, mediaUrls: string[] =
       lng: details.location.coordinates[0],
     },
     images: mediaUrls,
+    imagesUrl: (details as any).imagesUrl,
     likes: 0, // Default, could be calculated from engagement
   };
 }
@@ -448,15 +450,19 @@ export const usePlacesStore = defineStore('places', {
         return;
       }
 
-      // If media is already loaded, return
-      if (place.images && place.images.length > 0) {
-        return;
-      }
+      // If media already contains multiple images, assume it's loaded
+      if (place.images && place.images.length > 1) return;
 
       try {
         console.log(`Loading media for place ${placeId}...`);
         const mediaUrls = await mediaLibraryService.getMediaUrlsByPlace(placeId);
-        place.images = mediaUrls;
+        if (mediaUrls && mediaUrls.length > 0) {
+          // Merge unique URLs, keeping any existing preview as first if needed
+          const existing = new Set(place.images);
+          const merged = [...place.images, ...mediaUrls.filter(u => !existing.has(u))];
+          place.images = merged;
+          console.log(`Loaded ${mediaUrls.length} images for place ${placeId} (total now ${place.images.length})`);
+        }
         console.log(`Loaded ${mediaUrls.length} images for place ${placeId}`);
       } catch (error) {
         console.error(`Failed to load media for place ${placeId}:`, error);
@@ -469,7 +475,9 @@ export const usePlacesStore = defineStore('places', {
      */
     async loadPlaceMediaAsync(placeId: string): Promise<void> {
       const place = this.places.find(p => p.id === placeId);
-      if (!place || (place.images && place.images.length > 0)) {
+      // If we already have 2+ images, assume full media set has been loaded
+      // If we have 0 or 1 (preview), load the complete media set
+      if (!place || (place.images && place.images.length > 1)) {
         return;
       }
 
@@ -552,6 +560,38 @@ export const usePlacesStore = defineStore('places', {
         const existingIds = new Set(this.places.map(p => p.id));
         const uniqueNewPlaces = newPlaces.filter(p => !existingIds.has(p.id));
         this.places.push(...uniqueNewPlaces);
+        
+        // Enrich newly added viewport places with full details in the background
+        // This fills in missing fields like `address` so cards can show complete info
+        const placesNeedingDetails = uniqueNewPlaces.filter(p => !p.address || p.address.trim() === '');
+        if (placesNeedingDetails.length > 0) {
+          Promise.allSettled(
+            placesNeedingDetails.map(async (p) => {
+              try {
+                const resp = await placeCatalogService.getPlaceDetails(p.id);
+                const details = resp.place;
+                // Update in-place so Vue reactivity updates cards
+                const target = this.places.find(x => x.id === p.id);
+                if (target) {
+                  target.address = details.address || '';
+                  // Keep interests/category from viewport; hiddenGem can be refined
+                  if (typeof details.verified === 'boolean') {
+                    target.hiddenGem = !details.verified;
+                  }
+                  // Add external images gallery link if available
+                  if ((details as any).imagesUrl) {
+                    (target as any).imagesUrl = (details as any).imagesUrl;
+                  }
+                }
+              } catch (e) {
+                // Ignore individual failures; address will remain empty
+                console.warn('Failed to enrich place details for', p.id, e);
+              }
+            })
+          ).catch(() => {
+            // Swallow errors from allSettled wrapper
+          });
+        }
         
         console.log(`Added ${uniqueNewPlaces.length} new places to display`);
       } catch (error) {

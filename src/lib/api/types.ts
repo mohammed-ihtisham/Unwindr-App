@@ -194,6 +194,8 @@ export interface PlaceDetails {
     coordinates: [number, number];
   };
   source: string;
+  // Optional external images gallery URL (e.g., Google Images search)
+  imagesUrl?: string;
 }
 
 export interface GetPlaceDetailsResponse {

@@ -124,9 +124,6 @@ async function generateTags() {
       apiError.value = 'No relevant tags found for your description. Try being more specific or use manual selection.';
     }
     
-    // Show success feedback
-    showManualMode.value = true;
-    
   } catch (error: any) {
     apiError.value = error.response?.data?.error || error.message || 'Failed to generate tags';
   } finally {
@@ -228,8 +225,9 @@ function toggleManualMode() {
             <!-- Manual Mode Toggle -->
             <div class="flex items-center justify-center">
               <button
-                @click="toggleManualMode"
-                class="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                @click.stop="toggleManualMode"
+                class="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors pointer-events-auto"
+                type="button"
               >
                 <Tag :size="14" />
                 Manually Add Tags
@@ -240,6 +238,11 @@ function toggleManualMode() {
 
           <!-- Manual Tag Selection Section -->
           <div v-if="showManualMode" class="space-y-4">
+            <!-- Debug info -->
+            <div class="p-3 bg-blue-50 border border-blue-200 rounded text-sm">
+              Debug: isLoadingTags = {{ isLoadingTags }}, tagOptions.length = {{ tagOptions.length }}
+            </div>
+            
             <div class="space-y-3">
               <h3 class="text-sm font-medium text-gray-700">Select from available categories</h3>
               
@@ -249,6 +252,11 @@ function toggleManualMode() {
                   <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
                   <p class="text-sm text-gray-500">Loading categories...</p>
                 </div>
+              </div>
+              
+              <!-- No tags available -->
+              <div v-else-if="tagOptions.length === 0" class="p-4 text-center text-gray-500">
+                No categories available
               </div>
               
               <!-- Categories list -->
@@ -273,8 +281,9 @@ function toggleManualMode() {
             <!-- Back to Description -->
             <div class="flex items-center justify-center">
               <button
-                @click="toggleManualMode"
-                class="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-700 font-medium transition-colors"
+                @click.stop="toggleManualMode"
+                class="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-700 font-medium transition-colors pointer-events-auto"
+                type="button"
               >
                 <Wand2 :size="14" />
                 Use AI Description

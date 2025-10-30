@@ -77,6 +77,12 @@
                           @click="openFullGallery"
                         />
                       </div>
+                      <div
+                        v-else
+                        class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600"
+                      >
+                        <MapPin :size="48" class="text-white opacity-50" />
+                      </div>
                     </div>
 
                     <!-- Middle Column (2 vertically stacked) -->
@@ -119,15 +125,45 @@
                         />
                       </div>
                       <div
-                        v-if="place.images[4]"
-                        class="flex-1 relative overflow-hidden cursor-pointer rounded"
-                        @click="openFullGallery"
+                        v-if="place.images[4] || place.imagesUrl"
+                        class="flex-1 relative overflow-hidden cursor-pointer rounded group"
+                        @click="place.imagesUrl ? openExternalGallery(place.imagesUrl) : openFullGallery()"
+                        :title="place.imagesUrl ? 'See more photos' : `${place.name} image 5`"
+                        :aria-label="place.imagesUrl ? 'See more photos' : `${place.name} image 5`"
                       >
-                        <img
-                          :src="place.images[4]"
-                          :alt="`${place.name} image 5`"
-                          class="w-full h-full object-cover"
-                        />
+                        <template v-if="place.imagesUrl">
+                          <!-- Modern gradient/glass tile for external gallery -->
+                          <div
+                            class="w-full h-full relative overflow-hidden rounded-lg
+                                   bg-gradient-to-br from-blue-600/85 via-blue-500/80 to-purple-600/85
+                                   text-white shadow-lg hover:shadow-2xl transition-all duration-200
+                                   hover:scale-[1.02] border border-white/20"
+                          >
+                            <!-- Decorative sheen -->
+                            <div class="absolute inset-0 bg-gradient-to-tr from-white/20 via-transparent to-white/10 mix-blend-overlay pointer-events-none"></div>
+                            <div class="absolute inset-0 backdrop-blur-[2px]"></div>
+
+                            <!-- Content -->
+                            <div class="relative z-10 h-full w-full flex items-center justify-center p-3">
+                              <div class="text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                  <Grid3X3 :size="22" class="opacity-90" />
+                                  <ExternalLink :size="20" class="opacity-90" />
+                                </div>
+                                <div class="mt-2 text-sm font-semibold tracking-wide">See all photos</div>
+                                <div class="text-[11px] opacity-90">Opens in new tab</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="absolute inset-0 rounded-lg ring-0 group-hover:ring-2 ring-white/50 pointer-events-none"></div>
+                        </template>
+                        <template v-else>
+                          <img
+                            :src="place.images[4]"
+                            :alt="`${place.name} image 5`"
+                            class="w-full h-full object-cover"
+                          />
+                        </template>
                       </div>
                       <!-- See More Button (if more than 5 images) -->
                       <div
@@ -282,6 +318,11 @@ const formattedDistance = computed(() => {
 
 function openFullGallery() {
   showFullGallery.value = true;
+}
+
+function openExternalGallery(url?: string) {
+  if (!url) return;
+  window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 function toggleSave() {
