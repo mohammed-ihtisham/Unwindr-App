@@ -42,21 +42,12 @@
               <!-- Actions -->
               <div class="flex items-center gap-3">
                 <button
-                  @click="toggleSave"
+                  @click="toggleBookmark"
+                  :aria-pressed="isBookmarked"
                   class="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
                 >
-                  <Heart :size="18" :class="{ 'text-red-500 fill-current': isSaved }" />
-                  <span>{{ isSaved ? 'Saved' : 'Save' }}</span>
-                </button>
-                <button
-                  @click="handleShare"
-                  class="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                  <Share2 :size="18" />
-                  <span>Share</span>
-                </button>
-                <button class="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors">
-                  <MoreHorizontal :size="18" />
+                  <Bookmark :size="18" :class="[isBookmarked ? 'text-blue-600' : 'text-gray-600']" />
+                  <span>{{ isBookmarked ? 'Saved' : 'Save' }}</span>
                 </button>
               </div>
             </div>
@@ -216,29 +207,11 @@
                         </p>
                       </div>
                       <div class="text-right">
-                        <div class="text-lg font-semibold text-gray-700 mb-1">{{ place.hiddenGem ? 'Hidden Gem' : 'Popular Spot' }}</div>
-                        <div class="text-sm text-gray-600">{{ place.likes }} people liked this</div>
-                        <button class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium">
-                          Visit this place
-                        </button>
+                        <span v-if="place.hiddenGem" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">Hidden Gem</span>
                       </div>
                     </div>
 
-                    <!-- Place Stats -->
-                    <div class="grid grid-cols-3 gap-4 mb-6">
-                      <div class="text-center p-3 bg-gray-50 rounded-lg">
-                        <div class="text-xl font-bold text-gray-900">{{ place.interests.length }}</div>
-                        <div class="text-xs text-gray-600">Interests</div>
-                      </div>
-                      <div class="text-center p-3 bg-gray-50 rounded-lg">
-                        <div class="text-xl font-bold text-gray-900">{{ place.likes }}</div>
-                        <div class="text-xs text-gray-600">Likes</div>
-                      </div>
-                      <div class="text-center p-3 bg-gray-50 rounded-lg">
-                        <div class="text-xl font-bold text-gray-900">{{ place.hiddenGem ? 'Yes' : 'No' }}</div>
-                        <div class="text-xs text-gray-600">Hidden Gem</div>
-                      </div>
-                    </div>
+                    <!-- Optional badges removed per new design -->
 
                     <!-- Interest Tags -->
                     <div class="mb-6">
@@ -261,10 +234,10 @@
                       Get directions
                     </button>
                     <button
-                      @click="toggleSave"
+                      @click="shareOnGoogleMaps"
                       class="flex-1 border border-gray-300 text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                     >
-                      {{ isSaved ? 'Remove from saved' : 'Save this place' }}
+                      Share this place
                     </button>
                   </div>
                 </div>
@@ -303,7 +276,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue';
-import { Heart, Share2, MoreHorizontal, ChevronLeft, ChevronRight, MapPin, Grid3X3 } from 'lucide-vue-next';
+import { ChevronLeft, MapPin, Grid3X3, ExternalLink, Bookmark } from 'lucide-vue-next';
 import { usePlacesStore } from '@/stores/usePlacesStore';
 import MediaGallery from './MediaGallery.vue';
 
@@ -319,7 +292,8 @@ const emit = defineEmits<{
 
 const placesStore = usePlacesStore();
 
-const isSaved = ref(false);
+const BOOKMARKS_KEY = 'unwindr:bookmarks';
+const isBookmarked = ref(false);
 const showFullGallery = ref(false);
 const isLoading = ref(false);
 const loadedSet = ref<Set<string>>(new Set());
@@ -355,23 +329,46 @@ function openExternalGallery(url?: string) {
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
-function toggleSave() {
-  isSaved.value = !isSaved.value;
-  // Save functionality will be implemented with backend integration
-}
-
-function handleShare() {
-  if (navigator.share) {
-    navigator.share({
-      title: place.value?.name,
-      text: place.value?.address,
-      url: window.location.href,
-    });
-  } else {
-    // Fallback to copying URL
-    navigator.clipboard.writeText(window.location.href);
+function loadBookmarks(): Set<string> {
+  try {
+    const raw = localStorage.getItem(BOOKMARKS_KEY);
+    return new Set<string>(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set<string>();
   }
 }
+
+function saveBookmarks(ids: Set<string>) {
+  try {
+    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(Array.from(ids)));
+  } catch {
+    // ignore
+  }
+}
+
+function toggleBookmark() {
+  if (!place.value) return;
+  const ids = loadBookmarks();
+  if (ids.has(place.value.id)) {
+    ids.delete(place.value.id);
+    isBookmarked.value = false;
+  } else {
+    ids.add(place.value.id);
+    isBookmarked.value = true;
+  }
+  saveBookmarks(ids);
+}
+
+function shareOnGoogleMaps() {
+  if (!place.value) return;
+  const name = place.value.name || '';
+  const address = place.value.address || '';
+  const query = encodeURIComponent([name, address].filter(Boolean).join(' '));
+  const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+// Share functionality removed per product direction
 
 function handleBackdropClick(e: MouseEvent) {
   if (e.target === e.currentTarget) {
@@ -420,5 +417,12 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.body.style.overflow = '';
   document.removeEventListener('keydown', handleKeydown);
+});
+
+// Sync bookmark state when opening/when place changes
+watch([place, () => props.open], () => {
+  if (!place.value) return;
+  const ids = loadBookmarks();
+  isBookmarked.value = ids.has(place.value.id);
 });
 </script>

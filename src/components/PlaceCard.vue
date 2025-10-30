@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue';
-import { Heart, Share2, MapPin, ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import { Share2, MapPin, ChevronLeft, ChevronRight, Bookmark } from 'lucide-vue-next';
 import type { Place } from '@/stores/usePlacesStore';
 import { usePlacesStore } from '@/stores/usePlacesStore';
 import MediaGallery from './MediaGallery.vue';
@@ -12,7 +12,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'select', id: string): void;
-  (e: 'like', id: string): void;
+  (e: 'bookmark', id: string): void;
 }>();
 
 const placesStore = usePlacesStore();
@@ -23,6 +23,27 @@ const chosenFirstLoaded = ref(false);
 const rootEl = ref<HTMLElement | null>(null);
 let io: IntersectionObserver | null = null;
 
+// Simple localStorage-based bookmarks for now
+const BOOKMARKS_KEY = 'unwindr:bookmarks';
+const isBookmarked = ref(false);
+
+function loadBookmarks(): Set<string> {
+  try {
+    const raw = localStorage.getItem(BOOKMARKS_KEY);
+    return new Set<string>(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function saveBookmarks(ids: Set<string>) {
+  try {
+    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(Array.from(ids)));
+  } catch {
+    // ignore
+  }
+}
+
 const formattedDistance = computed(() => {
   if (props.place.distanceMilesFromUser != null) {
     return `${props.place.distanceMilesFromUser.toFixed(1)} mi away`;
@@ -30,15 +51,17 @@ const formattedDistance = computed(() => {
   return null;
 });
 
+const validImages = computed(() => props.place.images.filter((u) => !!u));
 const currentImage = computed(() => displaySrc.value || null);
 
 function preloadFirstLoaded() {
-  const valid = props.place.images.filter((u) => !!u);
+  const valid = validImages.value;
   // If we already have a src, keep it
   if (!displaySrc.value && valid.length > 0) {
     // Start with the first url as optimistic src
     displaySrc.value = valid[0];
   }
+  currentImageIndex.value = 0;
   chosenFirstLoaded.value = false;
   valid.slice(0, 5).forEach((url) => {
     const img = new Image();
@@ -88,16 +111,13 @@ async function navigateToDetail() {
 
 function nextImage(e: Event) {
   e.stopPropagation();
-  if (currentImageIndex.value < props.place.images.filter((u) => !!u).length - 1) {
-    currentImageIndex.value++;
-  }
+  const maxIndex = validImages.value.length - 1;
+  if (currentImageIndex.value < maxIndex) currentImageIndex.value++;
 }
 
 function prevImage(e: Event) {
   e.stopPropagation();
-  if (currentImageIndex.value > 0) {
-    currentImageIndex.value--;
-  }
+  if (currentImageIndex.value > 0) currentImageIndex.value--;
 }
 
 async function handleShare() {
@@ -110,8 +130,18 @@ async function handleShare() {
   }
 }
 
-async function handleLike() {
-  emit('like', props.place.id);
+function toggleBookmark(e?: Event) {
+  if (e) e.stopPropagation();
+  const ids = loadBookmarks();
+  if (ids.has(props.place.id)) {
+    ids.delete(props.place.id);
+    isBookmarked.value = false;
+  } else {
+    ids.add(props.place.id);
+    isBookmarked.value = true;
+  }
+  saveBookmarks(ids);
+  emit('bookmark', props.place.id);
 }
 
 function handleImgError(e: Event) {
@@ -125,6 +155,22 @@ function handleImgLoad() {
   // Mark that we have a loaded display image
   chosenFirstLoaded.value = true;
 }
+
+// Initialize bookmark state on mount and when place id changes
+onMounted(() => {
+  const ids = loadBookmarks();
+  isBookmarked.value = ids.has(props.place.id);
+});
+watch(() => props.place.id, () => {
+  const ids = loadBookmarks();
+  isBookmarked.value = ids.has(props.place.id);
+});
+
+// Keep displayed image in sync with the current index
+watch(currentImageIndex, (idx) => {
+  const list = validImages.value;
+  if (list[idx]) displaySrc.value = list[idx];
+});
 </script>
 
 <template>
@@ -161,7 +207,7 @@ function handleImgLoad() {
       </div>
       
       <!-- Carousel Navigation -->
-      <div v-if="place.images.length > 1" class="absolute inset-0 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+      <div v-if="validImages.length > 1" class="absolute inset-0 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           v-if="currentImageIndex > 0"
           @click="prevImage"
@@ -170,9 +216,9 @@ function handleImgLoad() {
           <ChevronLeft :size="20" class="text-gray-700" />
         </button>
         <button
-          v-if="currentImageIndex < place.images.length - 1"
+          v-if="currentImageIndex < validImages.length - 1"
           @click="nextImage"
-          class="mr-2 p-2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full shadow-md transition-all"
+          class="mr-2 ml-auto p-2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full shadow-md transition-all"
         >
           <ChevronRight :size="20" class="text-gray-700" />
         </button>
@@ -180,11 +226,11 @@ function handleImgLoad() {
 
       <!-- Image Dots Indicator -->
       <div
-        v-if="place.images.length > 1"
+        v-if="validImages.length > 1"
         class="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-1"
       >
         <div
-          v-for="(_, index) in place.images"
+          v-for="(_, index) in validImages"
           :key="index"
           :class="[
             'w-2 h-2 rounded-full transition-all',
@@ -193,12 +239,14 @@ function handleImgLoad() {
         />
       </div>
       
-      <!-- Heart Icon (Save) -->
+      <!-- Bookmark Icon (Save) -->
       <button
-        @click.stop="handleLike"
-        class="absolute top-3 right-3 p-2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full shadow-md transition-all"
+        @click.stop="toggleBookmark"
+        :aria-pressed="isBookmarked"
+        :title="isBookmarked ? 'Remove bookmark' : 'Save to bookmarks'"
+        class="absolute top-3 right-3 p-2 bg-white/80 hover:bg-white rounded-full shadow-md transition-all"
       >
-        <Heart :size="18" class="text-gray-700" />
+        <Bookmark :size="18" :class="[isBookmarked ? 'text-blue-600' : 'text-gray-700']" />
       </button>
 
       <!-- Hidden Gem Badge -->
@@ -243,20 +291,7 @@ function handleImgLoad() {
         </span>
       </div>
 
-      <!-- Bottom Actions -->
-      <div class="flex items-center justify-between pt-3 border-t border-gray-100">
-        <div class="flex items-center gap-1 text-sm text-gray-600">
-          <Heart :size="16" class="text-red-500" />
-          <span>{{ place.likes }} likes</span>
-        </div>
-        <button
-          @click.stop="handleShare"
-          class="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-500 transition-colors"
-        >
-          <Share2 :size="16" />
-          <span>Share</span>
-        </button>
-      </div>
+      <!-- No bottom actions; compact spacing -->
     </div>
 
     <!-- Gallery Modal -->
