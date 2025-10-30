@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue';
 import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw } from 'lucide-vue-next';
-import { useEngagement } from '@/composables/useEngagement';
 
 const props = defineProps<{
   images: string[];
@@ -12,7 +11,6 @@ const emit = defineEmits<{
   (e: 'close'): void;
 }>();
 
-const { recordTap } = useEngagement();
 const currentIndex = ref(0);
 const isTransitioning = ref(false);
 const touchStartX = ref(0);
@@ -30,13 +28,6 @@ watch(
       zoom.value = 1;
       rotation.value = 0;
       document.body.style.overflow = 'hidden';
-      
-      // Record tap interaction when gallery opens
-      if (props.images.length > 0) {
-        // Use the current image as the media item ID
-        const mediaItemId = props.images[currentIndex.value];
-        await recordTap(mediaItemId);
-      }
     } else {
       document.body.style.overflow = '';
     }
@@ -241,7 +232,7 @@ function handleBackdropClick(e: MouseEvent) {
         <!-- Previous Button -->
         <button
           v-if="images.length > 1"
-          @click.stop="prev"
+          @click.stop="prev"xx
           :disabled="isTransitioning"
           class="absolute left-4 top-1/2 transform -translate-y-1/2 p-4 text-white hover:bg-white hover:bg-opacity-20 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed z-20"
           aria-label="Previous image"

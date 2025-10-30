@@ -3,7 +3,6 @@ import { computed, onMounted, ref, nextTick, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { usePlacesStore, type ViewportBounds } from '@/stores/usePlacesStore';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { useEngagement } from '@/composables/useEngagement';
 import SearchBar from '@/components/SearchBar.vue';
 import FilterChips from '@/components/FilterChips.vue';
 import MileFilter from '@/components/MileFilter.vue';
@@ -17,7 +16,6 @@ import PlaceDetailModal from '@/components/PlaceDetailModal.vue';
 
 const placesStore = usePlacesStore();
 const authStore = useAuthStore();
-const { recordLike } = useEngagement();
 const {
   searchQuery,
   distanceMiles,
@@ -59,8 +57,6 @@ watch(() => authStore.isAuthenticated, (isAuthenticated) => {
 onMounted(async () => {
   // Initialize auth first
   await authStore.initialize();
-  
-  // Request user location and set default if needed
   // Don't auto-load all places - wait for viewport bounds
 });
 
@@ -85,8 +81,19 @@ const mapCenter = computed(() => {
   if (filteredPlaces.value.length > 0) {
     return filteredPlaces.value[0].location;
   }
-  return { lat: 42.3601, lng: -71.0589 }; // Boston, MA (where places are seeded)
+  return { lat: 42.359722, lng: -71.091944 }; // MIT Main Building (77 Massachusetts Ave, Cambridge, MA)
 });
+
+// Recenter map when user location changes (explicit user action)
+watch(
+  () => userLocation.value,
+  (loc) => {
+    if (loc && mapCanvasRef.value) {
+      mapCanvasRef.value.setCenter(loc.lat, loc.lng, 16);
+      mapCanvasRef.value.resetUserInteraction();
+    }
+  }
+);
 
 // Map markers from filtered places (only show places that match active filters)
 const mapMarkers = computed(() => {
@@ -111,10 +118,7 @@ function handlePlaceSelect(id: string) {
   placesStore.selectPlace(id);
 }
 
-async function handleLike(id: string) {
-  // Record like interaction
-  await recordLike(id);
-}
+async function handleLike(id: string) {}
 
 function handleLogin() {
   showAuthModal.value = true;
@@ -188,6 +192,7 @@ async function handleViewportChange(bounds: ViewportBounds) {
               @update:model-value="placesStore.setQuery"
             />
           </div>
+          
           <MileFilter
             :model-value="distanceMiles"
             @update:model-value="placesStore.setDistance"

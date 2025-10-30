@@ -93,7 +93,7 @@ export const usePlacesStore = defineStore('places', {
     distanceMiles: null, // Start with null, user must set distance filter
     selectedInterests: [],
     showHiddenGems: false,
-    userLocation: null,
+    userLocation: { lat: 42.359722, lng: -71.091944 },
     places: [],
     selectedPlaceId: null,
     isLoading: false,
@@ -254,6 +254,16 @@ export const usePlacesStore = defineStore('places', {
     },
     setUserLocation(loc: { lat: number; lng: number } | null) {
       this.userLocation = loc;
+      try {
+        const key = 'unwindr_user_location_v1';
+        if (loc) {
+          localStorage.setItem(key, JSON.stringify(loc));
+        } else {
+          localStorage.removeItem(key);
+        }
+      } catch (_e) {
+        // Ignore storage failures
+      }
     },
     selectPlace(id: string | null) {
       this.selectedPlaceId = id;
@@ -626,6 +636,26 @@ export const usePlacesStore = defineStore('places', {
     },
 
     /**
+     * Load persisted user location from localStorage if available
+     */
+    loadPersistedUserLocation() {
+      try {
+        const raw = localStorage.getItem('unwindr_user_location_v1');
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (
+          parsed &&
+          typeof parsed.lat === 'number' && Number.isFinite(parsed.lat) &&
+          typeof parsed.lng === 'number' && Number.isFinite(parsed.lng)
+        ) {
+          this.userLocation = { lat: parsed.lat, lng: parsed.lng };
+        }
+      } catch (_e) {
+        // Ignore parse/storage errors
+      }
+    },
+
+    /**
      * Add a new place
      */
     async addPlace(data: {
@@ -748,9 +778,8 @@ export const usePlacesStore = defineStore('places', {
      * Initialize the store with data
      */
     async initialize() {
-      await this.requestUserLocation();
-      // Auto-load places on initialization
-      await this.fetchPlaces();
+      // Hydrate user location from storage; if missing, caller may prompt
+      this.loadPersistedUserLocation();
     },
   },
 });

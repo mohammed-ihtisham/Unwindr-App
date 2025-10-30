@@ -3,7 +3,6 @@ import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { Heart, Share2, MapPin, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import type { Place } from '@/stores/usePlacesStore';
 import { usePlacesStore } from '@/stores/usePlacesStore';
-import { useEngagement } from '@/composables/useEngagement';
 import MediaGallery from './MediaGallery.vue';
 
 const props = defineProps<{
@@ -17,7 +16,6 @@ const emit = defineEmits<{
 }>();
 
 const placesStore = usePlacesStore();
-const { recordView, recordLike, recordShare } = useEngagement();
 const showGallery = ref(false);
 const currentImageIndex = ref(0);
 const displaySrc = ref<string | null>(null);
@@ -85,8 +83,6 @@ function openGallery() {
 }
 
 async function navigateToDetail() {
-  // Record view interaction
-  await recordView(props.place.id);
   placesStore.openModal(props.place.id);
 }
 
@@ -105,8 +101,6 @@ function prevImage(e: Event) {
 }
 
 async function handleShare() {
-  // Record share interaction
-  await recordShare(props.place.id);
   
   if (navigator.share) {
     navigator.share({
@@ -117,8 +111,6 @@ async function handleShare() {
 }
 
 async function handleLike() {
-  // Record like interaction
-  await recordLike(props.place.id);
   emit('like', props.place.id);
 }
 

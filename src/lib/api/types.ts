@@ -268,32 +268,7 @@ export interface PlacePreviewImage {
 
 export interface GetPreviewImagesForPlacesResponse extends Array<PlacePreviewImage> {}
 
-// ============================================================================
-// MediaAnalytics Types
-// ============================================================================
-
-export interface RecordInteractionRequest {
-  userId: ID;
-  mediaItemId: ID;
-  interactionType: string;
-}
-
-export interface RecordInteractionResponse {}
-
-export interface GetEngagementRequest {
-  mediaItemId: ID;
-}
-
-export interface GetEngagementResponse {
-  score: number;
-}
-
-export interface RecomputeScoresForPlaceRequest {
-  placeId: ID;
-  mediaItemIds: ID[];
-}
-
-export interface RecomputeScoresForPlaceResponse {}
+// MediaAnalytics removed: no frontend types required
 
 // ============================================================================
 // QualityRanking Types

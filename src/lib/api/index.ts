@@ -12,7 +12,7 @@ export { placeCatalogService } from './services/placeCatalog';
 export { interestFilterService } from './services/interestFilter';
 export { mediaLibraryService } from './services/mediaLibrary';
 export { qualityRankingService } from './services/qualityRanking';
-export { mediaAnalyticsService } from './services/mediaAnalytics';
+
 
 // Export types
 export type * from './types';

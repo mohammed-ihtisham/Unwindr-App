@@ -261,6 +261,13 @@ function resetUserInteraction() {
 defineExpose({
   fitToMarkers,
   resetUserInteraction,
+  setCenter(lat: number, lng: number, zoom?: number) {
+    if (!map) return;
+    const targetZoom = typeof zoom === 'number' ? zoom : map.getZoom();
+    map.setView([lat, lng], targetZoom, { animate: true });
+    // After recentring, emit new viewport so upstream can load places
+    emitViewportBounds();
+  },
 });
 </script>
 

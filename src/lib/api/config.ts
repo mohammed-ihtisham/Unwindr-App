@@ -43,12 +43,6 @@ export const API_ENDPOINTS = {
     getMediaItemsByPlace: '/api/MediaLibrary/getMediaItemsByPlace',
     getPreviewImagesForPlaces: '/api/MediaLibrary/getPreviewImagesForPlaces',
   },
-  // MediaAnalytics
-  mediaAnalytics: {
-    recordInteraction: '/api/MediaAnalytics/recordInteraction',
-    getEngagement: '/api/MediaAnalytics/_getEngagement',
-    recomputeScoresForPlace: '/api/MediaAnalytics/recomputeScoresForPlace',
-  },
   // QualityRanking
   qualityRanking: {
     updateMetrics: '/api/QualityRanking/updateMetrics',
