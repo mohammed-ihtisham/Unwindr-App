@@ -8,6 +8,7 @@ interface Marker {
   lat: number;
   lng: number;
   imageUrl?: string;
+  imageUrls?: string[]; // Multiple URLs to try
   active: boolean;
 }
 
@@ -119,13 +120,11 @@ function updateMarkers() {
     let marker = markerRefs.get(markerData.id);
 
     if (!marker) {
-      // Create custom icon with image preview
-      const iconHtml = markerData.imageUrl
-        ? `<div class="marker-preview" style="background-image: url('${markerData.imageUrl}'); width: 40px; height: 40px; border: 2px solid white; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); background-size: cover; background-position: center;"></div>`
-        : `<div class="marker-preview" style="width: 40px; height: 40px; border: 2px solid white; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); background: #3b82f6;"></div>`;
+      // Create custom icon with image preview, but only apply image after it loads
+      const baseHtml = `<div class=\"marker-preview\" style=\"width: 40px; height: 40px; border: 2px solid white; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); background: #3b82f6; background-size: cover; background-position: center;\"></div>`;
 
       const icon = L.divIcon({
-        html: iconHtml,
+        html: baseHtml,
         className: 'custom-marker',
         iconSize: [40, 40],
         iconAnchor: [20, 20],
@@ -139,9 +138,61 @@ function updateMarkers() {
         });
 
       markerRefs.set(markerData.id, marker);
+
+      // Try loading multiple images and use the first one that successfully loads
+      const urlsToTry: string[] = [];
+      if (markerData.imageUrls && markerData.imageUrls.length > 0) {
+        urlsToTry.push(...markerData.imageUrls.filter((u) => !!u));
+      } else if (markerData.imageUrl) {
+        urlsToTry.push(markerData.imageUrl);
+      }
+      
+      if (urlsToTry.length > 0) {
+        // Track if we've already set an image for this marker
+        let imageSet = false;
+        const el = marker.getElement()?.querySelector('.marker-preview') as HTMLElement;
+        
+        // Try loading up to 5 images in parallel, use first successful
+        urlsToTry.slice(0, 5).forEach((url) => {
+          const img = new Image();
+          img.onload = () => {
+            if (!imageSet && el) {
+              el.style.backgroundImage = `url('${url}')`;
+              imageSet = true;
+            }
+          };
+          img.onerror = () => {
+            // Silently ignore failed images, try next one
+          };
+          img.src = url;
+        });
+      }
     } else {
       // Update position if changed
       marker.setLatLng([markerData.lat, markerData.lng]);
+
+      // Update preview image if not set yet and we now have URLs
+      const el = marker.getElement()?.querySelector('.marker-preview') as HTMLElement | null;
+      const bg = el?.style.backgroundImage || '';
+      const urlsToTry: string[] = [];
+      if (markerData.imageUrls && markerData.imageUrls.length > 0) {
+        urlsToTry.push(...markerData.imageUrls.filter((u) => !!u));
+      } else if (markerData.imageUrl) {
+        urlsToTry.push(markerData.imageUrl);
+      }
+      if (el && !bg && urlsToTry.length > 0) {
+        let imageSet = false;
+        urlsToTry.slice(0, 5).forEach((url) => {
+          const img = new Image();
+          img.onload = () => {
+            if (!imageSet && el) {
+              el.style.backgroundImage = `url('${url}')`;
+              imageSet = true;
+            }
+          };
+          img.src = url;
+        });
+      }
     }
   });
 

@@ -45,6 +45,8 @@ const showAuthModal = ref(false);
 
 // Map component reference
 const mapCanvasRef = ref<InstanceType<typeof MapCanvas> | null>(null);
+// Control whether the detail modal should auto-open the gallery
+const autoOpenGalleryFromMap = ref(false);
 
 // Close modal automatically when user becomes authenticated
 watch(() => authStore.isAuthenticated, (isAuthenticated) => {
@@ -92,13 +94,17 @@ const mapMarkers = computed(() => {
     id: place.id,
     lat: place.location.lat,
     lng: place.location.lng,
-    imageUrl: place.images[0],
+    imageUrl: place.images[0], // Keep for backward compatibility
+    imageUrls: place.images.filter((u) => !!u), // Pass all valid image URLs
     active: place.id === selectedPlaceId.value,
   }));
 });
 
 function handleMarkerClick(id: string) {
+  // Select place and open modal with gallery auto-open
   placesStore.selectPlace(id);
+  autoOpenGalleryFromMap.value = true;
+  placesStore.openModal(id);
 }
 
 function handlePlaceSelect(id: string) {
@@ -127,6 +133,11 @@ async function handleLoadMore() {
 
 function handleRetry() {
   placesStore.retryFetchPlaces();
+}
+
+function handleCloseModal() {
+  placesStore.closeModal();
+  autoOpenGalleryFromMap.value = false;
 }
 
 async function handleViewportChange(bounds: ViewportBounds) {
@@ -268,7 +279,8 @@ async function handleViewportChange(bounds: ViewportBounds) {
     <PlaceDetailModal
       :place-id="modalPlaceId"
       :open="modalOpen"
-      @close="placesStore.closeModal"
+        :auto-open-gallery="autoOpenGalleryFromMap"
+        @close="handleCloseModal"
     />
 
   </div>

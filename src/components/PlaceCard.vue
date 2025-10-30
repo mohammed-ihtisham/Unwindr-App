@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { Heart, Share2, MapPin, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import type { Place } from '@/stores/usePlacesStore';
 import { usePlacesStore } from '@/stores/usePlacesStore';
@@ -20,6 +20,10 @@ const placesStore = usePlacesStore();
 const { recordView, recordLike, recordShare } = useEngagement();
 const showGallery = ref(false);
 const currentImageIndex = ref(0);
+const displaySrc = ref<string | null>(null);
+const chosenFirstLoaded = ref(false);
+const rootEl = ref<HTMLElement | null>(null);
+let io: IntersectionObserver | null = null;
 
 const formattedDistance = computed(() => {
   if (props.place.distanceMilesFromUser != null) {
@@ -28,8 +32,50 @@ const formattedDistance = computed(() => {
   return null;
 });
 
-const currentImage = computed(() => {
-  return props.place.images[currentImageIndex.value] || props.place.images[0];
+const currentImage = computed(() => displaySrc.value || null);
+
+function preloadFirstLoaded() {
+  const valid = props.place.images.filter((u) => !!u);
+  // If we already have a src, keep it
+  if (!displaySrc.value && valid.length > 0) {
+    // Start with the first url as optimistic src
+    displaySrc.value = valid[0];
+  }
+  chosenFirstLoaded.value = false;
+  valid.slice(0, 5).forEach((url) => {
+    const img = new Image();
+    img.onload = () => {
+      if (!chosenFirstLoaded.value) {
+        displaySrc.value = url;
+        chosenFirstLoaded.value = true;
+      }
+    };
+    img.onerror = () => {
+      // ignore failed url
+    };
+    img.src = url;
+  });
+}
+
+onMounted(preloadFirstLoaded);
+watch(() => props.place.images, preloadFirstLoaded, { deep: true });
+
+onMounted(() => {
+  // Lazy fetch full media for cards that are actually visible
+  io = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        placesStore.loadPlaceMediaAsync(props.place.id);
+        io && io.unobserve(entry.target);
+      }
+    });
+  }, { rootMargin: '200px' });
+  if (rootEl.value) io.observe(rootEl.value);
+});
+
+onBeforeUnmount(() => {
+  if (io && rootEl.value) io.unobserve(rootEl.value);
+  io = null;
 });
 
 function openGallery() {
@@ -46,7 +92,7 @@ async function navigateToDetail() {
 
 function nextImage(e: Event) {
   e.stopPropagation();
-  if (currentImageIndex.value < props.place.images.length - 1) {
+  if (currentImageIndex.value < props.place.images.filter((u) => !!u).length - 1) {
     currentImageIndex.value++;
   }
 }
@@ -75,6 +121,18 @@ async function handleLike() {
   await recordLike(props.place.id);
   emit('like', props.place.id);
 }
+
+function handleImgError(e: Event) {
+  const imgEl = e.target as HTMLImageElement;
+  imgEl.onerror = null as any;
+  // Hide the broken image so the fallback shows
+  imgEl.style.display = 'none';
+}
+
+function handleImgLoad() {
+  // Mark that we have a loaded display image
+  chosenFirstLoaded.value = true;
+}
 </script>
 
 <template>
@@ -84,17 +142,23 @@ async function handleLike() {
       selected ? 'ring-2 ring-blue-500 shadow-xl' : '',
     ]"
     :data-place-id="place.id"
+    ref="rootEl"
     @click="navigateToDetail"
   >
     <!-- Image Carousel -->
     <div
       class="relative h-64 bg-gray-200 overflow-hidden"
       @click.stop="navigateToDetail"
+      @mouseenter="placesStore.loadPlaceMediaAsync(place.id)"
     >
       <img
         v-if="currentImage"
         :src="currentImage"
         :alt="place.name"
+        loading="lazy"
+        decoding="async"
+        @error="handleImgError"
+        @load="handleImgLoad"
         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
       />
       <div

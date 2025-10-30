@@ -69,10 +69,14 @@
                   <div class="grid grid-cols-5 gap-2 h-96 lg:h-[28rem]">
                     <!-- Main Image (Left Column) - Horizontal -->
                     <div class="col-span-3 relative overflow-hidden rounded-l-lg">
-                      <div v-if="place.images[0]" class="relative w-full h-full">
+                      <div v-if="sortedImages[0]" class="relative w-full h-full">
                         <img
-                          :src="place.images[0]"
+                          :src="sortedImages[0]"
                           :alt="place.name"
+                          loading="lazy"
+                          decoding="async"
+                          @error="(e) => ((e.target as HTMLImageElement).style.display='none')"
+                          @load="() => loadedSet.add(sortedImages[0])"
                           class="w-full h-full object-cover cursor-pointer"
                           @click="openFullGallery"
                         />
@@ -88,24 +92,32 @@
                     <!-- Middle Column (2 vertically stacked) -->
                     <div class="col-span-1 flex flex-col gap-2">
                       <div
-                        v-if="place.images[1]"
+                        v-if="sortedImages[1]"
                         class="flex-1 relative overflow-hidden cursor-pointer rounded"
                         @click="openFullGallery"
                       >
                         <img
-                          :src="place.images[1]"
+                          :src="sortedImages[1]"
                           :alt="`${place.name} image 2`"
+                          loading="lazy"
+                          decoding="async"
+                          @error="(e) => ((e.target as HTMLImageElement).style.display='none')"
+                          @load="() => loadedSet.add(sortedImages[1])"
                           class="w-full h-full object-cover"
                         />
                       </div>
                       <div
-                        v-if="place.images[2]"
+                        v-if="sortedImages[2]"
                         class="flex-1 relative overflow-hidden cursor-pointer rounded"
                         @click="openFullGallery"
                       >
                         <img
-                          :src="place.images[2]"
+                          :src="sortedImages[2]"
                           :alt="`${place.name} image 3`"
+                          loading="lazy"
+                          decoding="async"
+                          @error="(e) => ((e.target as HTMLImageElement).style.display='none')"
+                          @load="() => loadedSet.add(sortedImages[2])"
                           class="w-full h-full object-cover"
                         />
                       </div>
@@ -114,18 +126,22 @@
                     <!-- Right Column (2 vertically stacked) -->
                     <div class="col-span-1 flex flex-col gap-2">
                       <div
-                        v-if="place.images[3]"
+                        v-if="sortedImages[3]"
                         class="flex-1 relative overflow-hidden cursor-pointer rounded"
                         @click="openFullGallery"
                       >
                         <img
-                          :src="place.images[3]"
+                          :src="sortedImages[3]"
                           :alt="`${place.name} image 4`"
+                          loading="lazy"
+                          decoding="async"
+                          @error="(e) => ((e.target as HTMLImageElement).style.display='none')"
+                          @load="() => loadedSet.add(sortedImages[3])"
                           class="w-full h-full object-cover"
                         />
                       </div>
                       <div
-                        v-if="place.images[4] || place.imagesUrl"
+                        v-if="sortedImages[4] || place.imagesUrl"
                         class="flex-1 relative overflow-hidden cursor-pointer rounded group"
                         @click="place.imagesUrl ? openExternalGallery(place.imagesUrl) : openFullGallery()"
                         :title="place.imagesUrl ? 'See more photos' : `${place.name} image 5`"
@@ -159,8 +175,12 @@
                         </template>
                         <template v-else>
                           <img
-                            :src="place.images[4]"
+                            :src="sortedImages[4]"
                             :alt="`${place.name} image 5`"
+                            loading="lazy"
+                            decoding="async"
+                            @error="(e) => ((e.target as HTMLImageElement).style.display='none')"
+                            @load="() => loadedSet.add(sortedImages[4])"
                             class="w-full h-full object-cover"
                           />
                         </template>
@@ -290,6 +310,7 @@ import MediaGallery from './MediaGallery.vue';
 const props = defineProps<{
   placeId: string | null;
   open: boolean;
+  autoOpenGallery?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -301,6 +322,15 @@ const placesStore = usePlacesStore();
 const isSaved = ref(false);
 const showFullGallery = ref(false);
 const isLoading = ref(false);
+const loadedSet = ref<Set<string>>(new Set());
+
+const sortedImages = computed(() => {
+  const imgs = (place.value?.images || []).filter((u) => !!u);
+  const loaded: string[] = [];
+  const pending: string[] = [];
+  imgs.forEach((u) => (loadedSet.value.has(u) ? loaded.push(u) : pending.push(u)));
+  return [...loaded, ...pending];
+});
 
 const place = computed(() => {
   if (!props.placeId) return null;
@@ -359,10 +389,20 @@ function handleKeydown(e: KeyboardEvent) {
 
 watch(
   () => props.open,
-  (isOpen) => {
+  async (isOpen) => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       document.addEventListener('keydown', handleKeydown);
+      // If requested, fetch full media and open gallery automatically
+      if (props.autoOpenGallery && props.placeId) {
+        try {
+          isLoading.value = true;
+          await placesStore.loadPlaceMedia(props.placeId);
+        } finally {
+          isLoading.value = false;
+          showFullGallery.value = true;
+        }
+      }
     } else {
       document.body.style.overflow = '';
       document.removeEventListener('keydown', handleKeydown);

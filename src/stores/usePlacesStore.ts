@@ -457,11 +457,13 @@ export const usePlacesStore = defineStore('places', {
         console.log(`Loading media for place ${placeId}...`);
         const mediaUrls = await mediaLibraryService.getMediaUrlsByPlace(placeId);
         if (mediaUrls && mediaUrls.length > 0) {
+          // Remove invalid/empty URLs and dedupe
+          const cleaned = mediaUrls.filter((u) => typeof u === 'string' && u.trim().length > 0);
           // Merge unique URLs, keeping any existing preview as first if needed
-          const existing = new Set(place.images);
-          const merged = [...place.images, ...mediaUrls.filter(u => !existing.has(u))];
+          const existing = new Set(place.images.filter((u) => !!u));
+          const merged = [...place.images.filter((u) => !!u), ...cleaned.filter(u => !existing.has(u))];
           place.images = merged;
-          console.log(`Loaded ${mediaUrls.length} images for place ${placeId} (total now ${place.images.length})`);
+          console.log(`Loaded ${cleaned.length} images for place ${placeId} (total now ${place.images.length})`);
         }
         console.log(`Loaded ${mediaUrls.length} images for place ${placeId}`);
       } catch (error) {
