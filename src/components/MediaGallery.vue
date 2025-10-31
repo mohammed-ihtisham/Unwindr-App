@@ -232,7 +232,7 @@ function handleBackdropClick(e: MouseEvent) {
         <!-- Previous Button -->
         <button
           v-if="images.length > 1"
-          @click.stop="prev"xx
+          @click.stop="prev"
           :disabled="isTransitioning"
           class="absolute left-4 top-1/2 transform -translate-y-1/2 p-4 text-white hover:bg-white hover:bg-opacity-20 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed z-20"
           aria-label="Previous image"

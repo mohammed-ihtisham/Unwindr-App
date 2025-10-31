@@ -159,10 +159,10 @@ function toggleManualMode() {
     <!-- Trigger Button -->
     <button
       @click="openModal"
-      class="flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200 bg-white min-w-[140px] group"
+      class="flex items-center gap-2 px-4 py-3 border border-earth-gray rounded-xl hover:bg-earth-cream transition-all duration-200 bg-white min-w-[140px] group shadow-sm"
     >
-      <span class="text-gray-700 font-medium">{{ displayText }}</span>
-      <ChevronDown :size="16" class="text-gray-500 group-hover:text-gray-700 transition-colors" />
+      <span class="text-earth-dark font-medium">{{ displayText }}</span>
+      <ChevronDown :size="16" class="text-earth-dark/50 group-hover:text-earth-dark transition-colors" />
     </button>
 
     <!-- Modal Overlay -->
@@ -180,12 +180,12 @@ function toggleManualMode() {
         <div class="p-6 border-b border-gray-100">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <div class="w-10 h-10 bg-gradient-to-br from-earth-dark to-earth-dark/80 rounded-xl flex items-center justify-center shadow-md">
                 <Wand2 :size="20" class="text-white" />
               </div>
               <div>
-                <h2 class="text-xl font-semibold text-gray-900">What are you looking for?</h2>
-                <p class="text-sm text-gray-500">Describe the vibe or type of places you want to discover</p>
+                <h2 class="text-xl font-semibold text-earth-dark">What are you looking for?</h2>
+                <p class="text-sm text-earth-dark/70">Describe the vibe or type of places you want to discover</p>
               </div>
             </div>
             <button
@@ -205,7 +205,7 @@ function toggleManualMode() {
               <textarea
                 v-model="descriptionInput"
                 placeholder="e.g., 'cozy coffee shops with great wifi for remote work' or 'romantic dinner spots with outdoor seating'"
-                class="w-full p-4 border border-gray-200 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400"
+                class="w-full p-4 border border-earth-gray rounded-xl resize-none focus:ring-2 focus:ring-earth-dark focus:border-earth-dark transition-all duration-200 placeholder-earth-dark/50 bg-white"
                 rows="3"
                 :disabled="isGenerating"
               ></textarea>
@@ -213,7 +213,7 @@ function toggleManualMode() {
                 <button
                   @click="generateTags"
                   :disabled="!descriptionInput.trim() || isGenerating"
-                  class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+                  class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-earth-dark to-earth-dark/80 text-white rounded-xl hover:from-earth-dark/90 hover:to-earth-dark/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105"
                 >
                   <Sparkles v-if="!isGenerating" :size="16" />
                   <div v-else class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -226,7 +226,7 @@ function toggleManualMode() {
             <div class="flex items-center justify-center">
               <button
                 @click.stop="toggleManualMode"
-                class="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors pointer-events-auto"
+                class="flex items-center gap-2 text-sm text-earth-khaki hover:text-earth-khaki/80 font-medium transition-colors pointer-events-auto"
                 type="button"
               >
                 <Tag :size="14" />
@@ -266,10 +266,10 @@ function toggleManualMode() {
                   :key="option.tag"
                   @click="toggleTag(option.tag)"
                   :class="[
-                    'w-full text-left px-3 py-2.5 rounded-lg transition-all duration-200 border',
+                    'w-full text-left px-3 py-2.5 rounded-xl transition-all duration-200 border',
                     selectedTags.includes(option.tag)
-                      ? 'bg-blue-50 border-blue-200 text-blue-900 shadow-sm'
-                      : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300'
+                      ? 'bg-earth-dark/10 border-earth-dark/30 text-earth-dark shadow-sm'
+                      : 'bg-white border-earth-gray text-earth-dark hover:bg-earth-cream hover:border-earth-gray'
                   ]"
                 >
                   <div class="font-medium text-sm">{{ formatTagDisplay(option.tag) }}</div>
@@ -307,12 +307,12 @@ function toggleManualMode() {
               <span
                 v-for="tag in selectedTags"
                 :key="tag"
-                class="inline-flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 text-sm rounded-full border border-blue-200"
+                class="inline-flex items-center gap-2 px-3 py-2 bg-earth-dark/10 text-earth-dark text-sm rounded-full border border-earth-dark/20"
               >
                 {{ formatTagDisplay(tag) }}
                 <button
                   @click="removeTag(tag)"
-                  class="hover:bg-blue-100 rounded-full p-0.5 transition-colors"
+                  class="hover:bg-earth-dark/20 rounded-full p-0.5 transition-colors"
                 >
                   <X :size="12" />
                 </button>
@@ -337,7 +337,7 @@ function toggleManualMode() {
               </button>
               <button
                 @click="closeModal"
-                class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors shadow-md hover:shadow-lg"
+                class="px-6 py-2 bg-earth-dark text-white rounded-xl hover:bg-earth-dark/90 font-medium transition-all shadow-md hover:shadow-lg hover:scale-105"
               >
                 Apply Tags
               </button>

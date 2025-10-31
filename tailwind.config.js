@@ -18,25 +18,33 @@ export default {
         sans: ["Inter", "ui-sans-serif", "system-ui", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"],
       },
       colors: {
+        // New Earthy Palette
+        earth: {
+          dark: "#4B2E17",        // Dark brown - text, borders, dark accents
+          cream: "#FDF9F5",       // Very light cream - backgrounds
+          orange: "#E47B35",     // Orange - primary actions
+          khaki: "#B8A76A",      // Khaki/olive - secondary accents, tags
+          gray: "#D8CFC6",       // Light gray/beige - borders, subtle backgrounds
+        },
         brand: {
-          DEFAULT: "#2563eb",
-          50: "#eff6ff",
-          100: "#dbeafe",
-          200: "#bfdbfe",
-          300: "#93c5fd",
-          400: "#60a5fa",
-          500: "#3b82f6",
-          600: "#2563eb",
-          700: "#1d4ed8",
-          800: "#1e40af",
-          900: "#1e3a8a"
+          DEFAULT: "#E47B35",
+          50: "#FDF9F5",
+          100: "#D8CFC6",
+          200: "#B8A76A",
+          300: "#E47B35",
+          400: "#4B2E17",
+          500: "#E47B35",
+          600: "#D16A2A",
+          700: "#4B2E17",
+          800: "#3A2412",
+          900: "#2A1A0D"
         },
         surface: {
-          50: "#ffffff",
-          100: "#f8fafc",
-          200: "#f1f5f9",
-          300: "#e2e8f0",
-          800: "#0f172a"
+          50: "#FDF9F5",
+          100: "#FFFFFF",
+          200: "#FAF7F5",
+          300: "#D8CFC6",
+          800: "#4B2E17"
         },
       },
       borderRadius: {

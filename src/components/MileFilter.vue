@@ -34,23 +34,23 @@ function selectOption(option: { label: string; value: number | null }) {
   <div class="relative">
     <button
       @click="showDropdown = !showDropdown"
-      class="flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors bg-white min-w-[140px]"
+      class="flex items-center gap-2 px-4 py-3 border border-earth-gray rounded-xl hover:bg-earth-cream transition-all bg-white min-w-[140px] shadow-sm"
     >
-      <span class="text-gray-700">{{ selectedOption.label }}</span>
-      <ChevronDown :size="16" class="text-gray-500" />
+      <span class="text-earth-dark font-medium">{{ selectedOption.label }}</span>
+      <ChevronDown :size="16" class="text-earth-dark/50" />
     </button>
     
     <div
       v-if="showDropdown"
-      class="absolute top-full mt-1 left-0 bg-white border border-gray-300 rounded-lg shadow-lg z-20 min-w-[160px]"
+      class="absolute top-full mt-1 left-0 bg-white border border-earth-gray rounded-xl shadow-lg z-20 min-w-[160px] overflow-hidden"
     >
       <button
         v-for="option in distanceOptions"
         :key="`dist-${option.value}`"
         @click="selectOption(option)"
         :class="[
-          'block w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors text-sm',
-          option.value === modelValue ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700',
+          'block w-full text-left px-4 py-3 hover:bg-earth-cream transition-colors text-sm',
+          option.value === modelValue ? 'bg-earth-dark/10 text-earth-dark font-medium' : 'text-earth-dark',
         ]"
       >
         {{ option.label }}

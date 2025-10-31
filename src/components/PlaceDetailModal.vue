@@ -30,10 +30,10 @@
             @click.stop
           >
             <!-- Header -->
-            <div class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <div class="bg-white border-b border-earth-gray px-6 py-4 flex items-center justify-between">
               <button
                 @click="$emit('close')"
-                class="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                class="flex items-center gap-2 text-earth-dark hover:text-earth-khaki transition-colors"
               >
                 <ChevronLeft :size="20" />
                 <span class="font-medium">Back to search</span>
@@ -44,9 +44,9 @@
                 <button
                   @click="toggleBookmark"
                   :aria-pressed="isBookmarked"
-                  class="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                  class="flex items-center gap-2 px-3 py-2 text-earth-dark hover:text-earth-khaki transition-colors rounded-lg hover:bg-earth-cream"
                 >
-                  <Bookmark :size="18" :class="[isBookmarked ? 'text-blue-600' : 'text-gray-600']" />
+                  <Bookmark :size="18" :class="[isBookmarked ? 'text-earth-khaki fill-earth-khaki' : 'text-earth-khaki']" />
                   <span>{{ isBookmarked ? 'Saved' : 'Save' }}</span>
                 </button>
               </div>
@@ -74,7 +74,7 @@
                       </div>
                       <div
                         v-else
-                        class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600"
+                        class="w-full h-full flex items-center justify-center bg-gradient-to-br from-earth-dark to-earth-dark/80"
                       >
                         <MapPin :size="48" class="text-white opacity-50" />
                       </div>
@@ -142,7 +142,7 @@
                           <!-- Modern gradient/glass tile for external gallery -->
                           <div
                             class="w-full h-full relative overflow-hidden rounded-lg
-                                   bg-gradient-to-br from-blue-600/85 via-blue-500/80 to-purple-600/85
+                                   bg-gradient-to-br from-earth-dark/85 via-earth-dark/70 to-earth-dark/85
                                    text-white shadow-lg hover:shadow-2xl transition-all duration-200
                                    hover:scale-[1.02] border border-white/20"
                           >
@@ -197,17 +197,17 @@
                   <div class="mb-6">
                     <div class="flex items-start justify-between mb-4">
                       <div>
-                        <h1 class="text-2xl font-bold text-gray-900 mb-2">{{ place?.name || 'No name' }}</h1>
-                        <div class="flex items-center gap-1 text-gray-600 mb-2">
+                        <h1 class="text-2xl font-bold text-earth-dark mb-2">{{ place?.name || 'No name' }}</h1>
+                        <div class="flex items-center gap-1 text-earth-dark/70 mb-2">
                           <MapPin :size="14" class="mt-0.5" />
                           <span>{{ place?.address || 'No address' }}</span>
                         </div>
-                        <p v-if="formattedDistance" class="text-sm text-gray-500">
+                        <p v-if="formattedDistance" class="text-sm text-earth-dark/60">
                           {{ formattedDistance }}
                         </p>
                       </div>
                       <div class="text-right">
-                        <span v-if="place.hiddenGem" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">Hidden Gem</span>
+                        <span v-if="place.hiddenGem" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-earth-khaki text-white border border-earth-khaki/50 shadow-sm">Hidden Gem</span>
                       </div>
                     </div>
 
@@ -215,11 +215,11 @@
 
                     <!-- Category and Tags -->
                     <div class="mb-6">
-                      <h3 class="text-lg font-semibold text-gray-900 mb-3">Category & Tags</h3>
+                      <h3 class="text-lg font-semibold text-earth-dark mb-3">Category & Tags</h3>
                       <div class="flex flex-wrap gap-2">
                         <!-- Category (shown as primary) -->
                         <span
-                          class="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full border border-blue-200 font-medium"
+                          class="px-3 py-1 bg-earth-dark/10 text-earth-dark text-sm rounded-full border border-earth-dark/20 font-medium"
                         >
                           {{ formatTagDisplay(place.category) }}
                         </span>
@@ -227,13 +227,13 @@
                         <span
                           v-for="tag in place.tags"
                           :key="tag"
-                          class="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full border border-blue-200"
+                          class="px-3 py-1 bg-earth-khaki/10 text-earth-khaki text-sm rounded-full border border-earth-khaki/20"
                         >
                           {{ formatTagDisplay(tag) }}
                         </span>
                         <span
                           v-if="place.tags.length === 0"
-                          class="px-3 py-1 bg-gray-50 text-gray-500 text-sm rounded-full border border-gray-200 italic"
+                          class="px-3 py-1 bg-earth-gray text-earth-dark/70 text-sm rounded-full border border-earth-gray italic"
                         >
                           No additional tags
                         </span>
@@ -243,12 +243,12 @@
 
                   <!-- Action Buttons -->
                   <div class="flex flex-col sm:flex-row gap-3">
-                    <button class="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                    <button class="flex-1 bg-earth-dark text-white py-3 px-6 rounded-xl font-medium hover:bg-earth-dark/90 transition-all shadow-md hover:shadow-lg hover:scale-[1.02]">
                       Get directions
                     </button>
                     <button
                       @click="shareOnGoogleMaps"
-                      class="flex-1 border border-gray-300 text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                      class="flex-1 border border-earth-gray text-earth-dark py-3 px-6 rounded-xl font-medium hover:bg-earth-cream transition-all"
                     >
                       Share this place
                     </button>
@@ -258,15 +258,15 @@
 
               <!-- Loading State -->
               <div v-else-if="isLoading" class="flex items-center justify-center h-64">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-earth-dark"></div>
               </div>
 
               <!-- Error State -->
               <div v-else class="text-center py-12">
-                <div class="text-gray-500 mb-4">Place not found</div>
+                <div class="text-earth-dark/70 mb-4">Place not found</div>
                 <button
                   @click="$emit('close')"
-                  class="text-blue-600 hover:text-blue-800 font-medium"
+                  class="text-earth-khaki hover:text-earth-khaki/80 font-medium px-4 py-2 rounded-lg hover:bg-earth-cream transition-colors"
                 >
                   Close
                 </button>

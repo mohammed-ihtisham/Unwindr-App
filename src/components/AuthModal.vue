@@ -92,7 +92,7 @@ const handleClose = () => {
           <!-- Header -->
           <div class="px-6 pt-6 pb-4 border-b border-gray-100">
             <div class="flex items-center justify-between">
-              <h2 class="text-2xl font-bold text-gray-900">
+              <h2 class="text-2xl font-bold text-earth-dark">
                 {{ mode === 'login' ? 'Welcome Back' : 'Create Account' }}
               </h2>
               <button
@@ -105,7 +105,7 @@ const handleClose = () => {
                 </svg>
               </button>
             </div>
-            <p class="mt-2 text-sm text-gray-600">
+            <p class="mt-2 text-sm text-earth-dark/70">
               {{ mode === 'login' 
                 ? 'Sign in to access your personalized experience' 
                 : 'Join Unwindr to discover hidden gems' 
@@ -125,7 +125,7 @@ const handleClose = () => {
 
             <!-- Username Field -->
             <div>
-              <label for="username" class="block text-sm font-medium text-gray-700 mb-1">
+              <label for="username" class="block text-sm font-medium text-earth-dark mb-1">
                 Username
               </label>
               <input
@@ -134,14 +134,14 @@ const handleClose = () => {
                 type="text"
                 required
                 :disabled="isLoading"
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 placeholder-gray-500"
+                class="w-full px-4 py-3 border border-earth-gray rounded-xl focus:ring-2 focus:ring-earth-dark focus:border-earth-dark transition-all disabled:bg-earth-cream disabled:cursor-not-allowed text-earth-dark placeholder-earth-dark/50 bg-white"
                 placeholder="Enter your username"
               />
             </div>
 
             <!-- Password Field -->
             <div>
-              <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+              <label for="password" class="block text-sm font-medium text-earth-dark mb-1">
                 Password
               </label>
               <input
@@ -150,14 +150,14 @@ const handleClose = () => {
                 type="password"
                 required
                 :disabled="isLoading"
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 placeholder-gray-500"
+                class="w-full px-4 py-3 border border-earth-gray rounded-xl focus:ring-2 focus:ring-earth-dark focus:border-earth-dark transition-all disabled:bg-earth-cream disabled:cursor-not-allowed text-earth-dark placeholder-earth-dark/50 bg-white"
                 :placeholder="mode === 'register' ? 'At least 6 characters' : 'Enter your password'"
               />
             </div>
 
             <!-- Confirm Password Field (Register only) -->
             <div v-if="mode === 'register'">
-              <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-1">
+              <label for="confirm-password" class="block text-sm font-medium text-earth-dark mb-1">
                 Confirm Password
               </label>
               <input
@@ -166,7 +166,7 @@ const handleClose = () => {
                 type="password"
                 required
                 :disabled="isLoading"
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 placeholder-gray-500"
+                class="w-full px-4 py-3 border border-earth-gray rounded-xl focus:ring-2 focus:ring-earth-dark focus:border-earth-dark transition-all disabled:bg-earth-cream disabled:cursor-not-allowed text-earth-dark placeholder-earth-dark/50 bg-white"
                 placeholder="Confirm your password"
               />
             </div>
@@ -175,7 +175,7 @@ const handleClose = () => {
             <button
               type="submit"
               :disabled="!isFormValid || isLoading"
-              class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors focus:ring-4 focus:ring-blue-200"
+              class="w-full py-3 px-4 bg-earth-dark hover:bg-earth-dark/90 disabled:bg-earth-dark/30 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-all shadow-md hover:shadow-lg hover:scale-[1.02] focus:ring-4 focus:ring-earth-dark/30"
             >
               <span v-if="!isLoading">
                 {{ mode === 'login' ? 'Sign In' : 'Create Account' }}
@@ -195,7 +195,7 @@ const handleClose = () => {
             <button
               @click="switchMode"
               :disabled="isLoading"
-              class="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:text-gray-400 disabled:cursor-not-allowed"
+              class="text-sm text-earth-khaki hover:text-earth-khaki/80 font-medium disabled:text-earth-dark/40 disabled:cursor-not-allowed"
             >
               {{ mode === 'login' 
                 ? "Don't have an account? Sign up" 

@@ -178,8 +178,8 @@ watch(currentImageIndex, (idx) => {
 <template>
   <div
     :class="[
-      'group relative bg-white border border-gray-200 rounded-lg overflow-hidden transition-all cursor-pointer hover:shadow-lg',
-      selected ? 'ring-2 ring-blue-500 shadow-xl' : '',
+      'group relative bg-white border border-earth-gray rounded-xl overflow-hidden transition-all cursor-pointer hover:shadow-xl hover:scale-[1.02]',
+      selected ? 'ring-2 ring-earth-dark shadow-xl border-earth-dark' : '',
     ]"
     :data-place-id="place.id"
     ref="rootEl"
@@ -203,7 +203,7 @@ watch(currentImageIndex, (idx) => {
       />
       <div
         v-else
-        class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600"
+        class="w-full h-full flex items-center justify-center bg-gradient-to-br from-earth-dark to-earth-dark/80"
       >
         <MapPin :size="48" class="text-white opacity-50" />
       </div>
@@ -246,15 +246,15 @@ watch(currentImageIndex, (idx) => {
         @click.stop="toggleBookmark"
         :aria-pressed="isBookmarked"
         :title="isBookmarked ? 'Remove bookmark' : 'Save to bookmarks'"
-        class="absolute top-3 right-3 p-2 bg-white/80 hover:bg-white rounded-full shadow-md transition-all"
+        class="absolute top-3 right-3 p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-all backdrop-blur-sm"
       >
-        <Bookmark :size="18" :class="[isBookmarked ? 'text-blue-600' : 'text-gray-700']" />
+        <Bookmark :size="18" :class="[isBookmarked ? 'text-earth-khaki fill-earth-khaki' : 'text-earth-khaki']" />
       </button>
 
       <!-- Hidden Gem Badge -->
       <div
         v-if="place.hiddenGem"
-        class="absolute top-3 left-3 px-2 py-1 bg-amber-500 text-white text-xs font-semibold rounded"
+        class="absolute top-3 left-3 px-2 py-1 bg-earth-khaki text-white text-xs font-semibold rounded-lg shadow-md"
       >
         Hidden Gem
       </div>
@@ -264,15 +264,15 @@ watch(currentImageIndex, (idx) => {
     <div class="p-4">
       <!-- Price/Title -->
       <div class="mb-2">
-        <h3 class="text-xl font-semibold text-gray-900 mb-1">{{ place.name }}</h3>
-        <p class="text-sm text-gray-600 flex items-start gap-1">
+        <h3 class="text-xl font-semibold text-earth-dark mb-1">{{ place.name }}</h3>
+        <p class="text-sm text-earth-dark/70 flex items-start gap-1">
           <MapPin :size="14" class="mt-0.5 flex-shrink-0" />
           <span>{{ place.address }}</span>
         </p>
       </div>
 
       <!-- Distance -->
-      <p v-if="formattedDistance" class="text-sm text-gray-500 mb-3">
+      <p v-if="formattedDistance" class="text-sm text-earth-dark/60 mb-3">
         {{ formattedDistance }}
       </p>
 
@@ -280,7 +280,7 @@ watch(currentImageIndex, (idx) => {
       <div class="flex flex-wrap gap-1 mb-3">
         <!-- Category (always shown first as primary tag) -->
         <span
-          class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-200 font-medium"
+          class="px-2 py-1 bg-earth-dark/10 text-earth-dark text-xs rounded-full border border-earth-dark/20 font-medium"
         >
           {{ formatTagDisplay(place.category) }}
         </span>
@@ -288,13 +288,13 @@ watch(currentImageIndex, (idx) => {
         <span
           v-for="tag in place.tags.slice(0, 2)"
           :key="tag"
-          class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-200"
+          class="px-2 py-1 bg-earth-khaki/10 text-earth-khaki text-xs rounded-full border border-earth-khaki/20"
         >
           {{ formatTagDisplay(tag) }}
         </span>
         <span
           v-if="place.tags.length > 2"
-          class="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded-full border border-gray-200"
+          class="px-2 py-1 bg-earth-gray text-earth-dark/70 text-xs rounded-full border border-earth-gray"
         >
           +{{ place.tags.length - 2 }}
         </span>

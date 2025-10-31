@@ -153,37 +153,39 @@ async function handleViewportChange(bounds: ViewportBounds) {
 </script>
 
 <template>
-  <div class="flex flex-col h-screen bg-white" :class="{ 'overflow-hidden': showAuthModal }">
+  <div class="flex flex-col h-screen bg-earth-cream" :class="{ 'overflow-hidden': showAuthModal }">
     <!-- Blur overlay when auth modal is open -->
     <div 
       v-if="showAuthModal && !authStore.isAuthenticated" 
-      class="fixed inset-0 backdrop-blur-sm bg-black/20 z-[9998]"
+      class="fixed inset-0 backdrop-blur-sm bg-earth-dark/20 z-[9998]"
     ></div>
     
     <!-- Top Bar -->
-    <header class="flex-shrink-0 border-b border-gray-200 bg-white">
+    <header class="flex-shrink-0 border-b border-earth-gray bg-white shadow-sm">
       <!-- Main Header -->
       <div class="px-6 py-3">
-        <div class="flex items-center justify-between">
-          <!-- Left Navigation (empty for now) -->
-          <div class="flex items-center space-x-6">
-            <!-- Could add navigation items here -->
-          </div>
-
+        <div class="flex items-center justify-center relative">
           <!-- Centered Logo -->
-          <div class="flex-1 flex justify-center">
-            <h1 class="text-3xl font-bold text-blue-600">Unwindr</h1>
+          <div class="flex justify-center">
+            <!-- Crop transparent top/bottom by overflowing a taller image inside a fixed-height box -->
+            <div class="h-12 sm:h-14 md:h-16 lg:h-16 xl:h-16 overflow-hidden flex items-center">
+              <img
+                src="/unwindr-logo.png"
+                alt="Unwindr"
+                class="h-[280%] w-auto object-contain"
+              />
+            </div>
           </div>
 
-          <!-- Right Navigation -->
-          <div class="flex items-center space-x-4">
+          <!-- Right Navigation - Absolute positioned -->
+          <div class="absolute right-6 flex items-center space-x-4">
             <LoginButton @click="handleLogin" />
           </div>
         </div>
       </div>
 
       <!-- Search and Filter Bar -->
-      <div class="px-6 py-3 bg-gray-50 border-t border-gray-100">
+      <div class="px-6 py-4 bg-earth-cream border-t border-earth-gray">
         <!-- Search Row -->
         <div class="flex items-center gap-3 mb-3">
           <div class="flex-1">
@@ -203,8 +205,8 @@ async function handleViewportChange(bounds: ViewportBounds) {
             @tags-generated="handleTagsGenerated"
           />
           <!-- Hidden Gems Toggle -->
-          <div class="flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-lg bg-white">
-            <span class="text-sm text-gray-700">Hidden Gems</span>
+          <div class="flex items-center gap-2 px-4 py-3 border border-earth-gray rounded-xl bg-white shadow-sm">
+            <span class="text-sm text-earth-dark font-medium">Hidden Gems</span>
             <ToggleSwitch
               :model-value="showHiddenGems"
               @update:model-value="placesStore.setHiddenGems"
@@ -233,19 +235,19 @@ async function handleViewportChange(bounds: ViewportBounds) {
         <!-- Error overlay -->
         <div 
           v-if="error && !isLoading"
-          class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-20"
+          class="absolute inset-0 bg-white bg-opacity-95 flex items-center justify-center z-20 backdrop-blur-sm"
         >
           <div class="text-center max-w-md mx-6">
-            <div class="w-16 h-16 bg-red-100 rounded-2xl mx-auto mb-6 flex items-center justify-center">
-              <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-16 h-16 bg-earth-dark/10 rounded-2xl mx-auto mb-6 flex items-center justify-center">
+              <svg class="w-8 h-8 text-earth-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">Connection Issue</h3>
-            <p class="text-gray-600 mb-6">{{ error }}</p>
+            <h3 class="text-xl font-bold text-earth-dark mb-2">Connection Issue</h3>
+            <p class="text-earth-dark/80 mb-6">{{ error }}</p>
             <button
               @click="handleRetry"
-              class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-md hover:shadow-lg"
+              class="px-6 py-3 bg-earth-dark hover:bg-earth-dark/90 text-white font-medium rounded-xl transition-all shadow-md hover:shadow-lg hover:scale-105"
             >
               Try Again
             </button>
@@ -254,7 +256,7 @@ async function handleViewportChange(bounds: ViewportBounds) {
       </div>
 
       <!-- Places Panel -->
-      <div class="w-full lg:w-[600px] xl:w-[700px] border-l border-gray-200">
+      <div class="w-full lg:w-[600px] xl:w-[700px] border-l border-earth-gray bg-white">
         <PlacesPanel
           ref="placesPanelRef"
           :places="allPlaces"

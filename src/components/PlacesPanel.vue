@@ -101,15 +101,15 @@ defineExpose({
     class="flex flex-col h-full bg-white overflow-y-auto"
   >
     <!-- Header -->
-    <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
+    <div class="sticky top-0 bg-white border-b border-earth-gray px-6 py-4 z-10 shadow-sm">
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-2xl font-semibold text-gray-900">Places</h2>
-          <p class="text-sm text-gray-500 mt-1">
+          <h2 class="text-2xl font-semibold text-earth-dark">Places</h2>
+          <p class="text-sm text-earth-dark/70 mt-1">
             {{ places.length }} {{ places.length === 1 ? 'place' : 'places' }} showing
           </p>
         </div>
-        <div class="text-sm text-gray-500">
+        <div class="text-sm text-earth-dark/70">
           Sort: Distance
         </div>
       </div>
@@ -117,20 +117,20 @@ defineExpose({
 
     <!-- Loading State -->
     <div v-if="isLoading" class="flex-1 flex items-center justify-center p-6">
-      <div class="text-center text-gray-500">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p class="text-lg font-medium mb-1">Loading places...</p>
+      <div class="text-center text-earth-dark/70">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-earth-dark mx-auto mb-4"></div>
+        <p class="text-lg font-medium mb-1 text-earth-dark">Loading places...</p>
         <p class="text-sm mb-4">Fetching all places with images from the database</p>
         
         <!-- Progress Bar -->
         <div v-if="loadingProgress !== undefined" class="w-full max-w-xs mx-auto">
-          <div class="bg-gray-200 rounded-full h-2 mb-2">
+          <div class="bg-earth-gray rounded-full h-2 mb-2">
             <div 
-              class="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+              class="bg-earth-dark h-2 rounded-full transition-all duration-300 ease-out"
               :style="{ width: `${loadingProgress}%` }"
             ></div>
           </div>
-          <p class="text-sm text-gray-600">{{ Math.round(loadingProgress || 0) }}% complete</p>
+          <p class="text-sm text-earth-dark/70">{{ Math.round(loadingProgress || 0) }}% complete</p>
         </div>
       </div>
     </div>
@@ -162,11 +162,11 @@ defineExpose({
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
           </svg>
         </div>
-        <p class="text-lg font-medium mb-2 text-red-600">Connection Issue</p>
-        <p class="text-sm mb-4">{{ error }}</p>
+        <p class="text-lg font-medium mb-2 text-earth-dark">Connection Issue</p>
+        <p class="text-sm mb-4 text-earth-dark/80">{{ error }}</p>
         <button
           @click="emit('retry')"
-          class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+          class="bg-earth-dark hover:bg-earth-dark/90 text-white font-medium py-2 px-4 rounded-xl transition-all shadow-md hover:shadow-lg hover:scale-105"
         >
           Retry Connection
         </button>
@@ -178,8 +178,8 @@ defineExpose({
       v-else
       class="flex-1 flex items-center justify-center p-6"
     >
-      <div class="text-center text-gray-500">
-        <p class="text-lg font-medium mb-1">No places in this area</p>
+      <div class="text-center text-earth-dark/70">
+        <p class="text-lg font-medium mb-1 text-earth-dark">No places in this area</p>
         <p class="text-sm">Try adjusting your search criteria or viewing more of the map</p>
       </div>
     </div>
