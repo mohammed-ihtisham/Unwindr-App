@@ -172,6 +172,7 @@ export interface ViewportPlace {
   id: ID;
   name: string;
   category: string;
+  tags?: string[]; // Optional tags for viewport places
   lat: number;
   lng: number;
 }
@@ -187,6 +188,7 @@ export interface PlaceDetails {
   name: string;
   address: string;
   category: string;
+  tags: string[]; // List of tags associated with the place
   verified: boolean;
   addedBy: ID;
   location: {

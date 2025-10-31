@@ -4,6 +4,7 @@ import { Share2, MapPin, ChevronLeft, ChevronRight, Bookmark } from 'lucide-vue-
 import type { Place } from '@/stores/usePlacesStore';
 import { usePlacesStore } from '@/stores/usePlacesStore';
 import MediaGallery from './MediaGallery.vue';
+import { useInterests } from '@/composables/useInterests';
 
 const props = defineProps<{
   place: Place;
@@ -16,6 +17,7 @@ const emit = defineEmits<{
 }>();
 
 const placesStore = usePlacesStore();
+const { formatTagDisplay } = useInterests();
 const showGallery = ref(false);
 const currentImageIndex = ref(0);
 const displaySrc = ref<string | null>(null);
@@ -274,20 +276,27 @@ watch(currentImageIndex, (idx) => {
         {{ formattedDistance }}
       </p>
 
-      <!-- Interests Tags -->
+      <!-- Category and Tags -->
       <div class="flex flex-wrap gap-1 mb-3">
+        <!-- Category (always shown first as primary tag) -->
         <span
-          v-for="interest in place.interests.slice(0, 3)"
-          :key="interest"
+          class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-200 font-medium"
+        >
+          {{ formatTagDisplay(place.category) }}
+        </span>
+        <!-- Tags (show up to 2 additional tags) -->
+        <span
+          v-for="tag in place.tags.slice(0, 2)"
+          :key="tag"
           class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-200"
         >
-          {{ interest }}
+          {{ formatTagDisplay(tag) }}
         </span>
         <span
-          v-if="place.interests.length > 3"
+          v-if="place.tags.length > 2"
           class="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded-full border border-gray-200"
         >
-          +{{ place.interests.length - 3 }}
+          +{{ place.tags.length - 2 }}
         </span>
       </div>
 

@@ -7,7 +7,9 @@ export type Place = {
   id: string;
   name: string;
   address: string;
-  interests: string[];
+  category: string; // Main category of the place
+  tags: string[]; // List of tags for filtering
+  interests: string[]; // Deprecated: kept for backward compatibility, now combines category + tags
   hiddenGem: boolean;
   location: { lat: number; lng: number };
   images: string[];
@@ -49,14 +51,18 @@ type State = {
  * Convert API PlaceDetails to our Place type
  */
 function convertPlaceDetailsToPlace(details: PlaceDetails, mediaUrls: string[] = []): Place {
-  // Use the category directly from the API without hardcoded mapping
-  const interests = [details.category];
+  // Combine category and tags for interests (backward compatibility)
+  // Tags array will be empty if API doesn't provide it yet
+  const tags = details.tags || [];
+  const interests = [details.category, ...tags].filter(Boolean);
   
   return {
     id: details.id,
     name: details.name,
     address: details.address,
-    interests: interests,
+    category: details.category,
+    tags: tags,
+    interests: interests, // Keep for backward compatibility with existing filtering
     hiddenGem: !details.verified, // Unverified places are "hidden gems"
     location: {
       lat: details.location.coordinates[1], // GeoJSON is [lng, lat]
@@ -72,11 +78,16 @@ function convertPlaceDetailsToPlace(details: PlaceDetails, mediaUrls: string[] =
  * Convert ViewportPlace to our Place type
  */
 function convertViewportPlaceToPlace(viewportPlace: ViewportPlace, previewImage: string | null = null): Place {
+  const tags = viewportPlace.tags || [];
+  const interests = [viewportPlace.category, ...tags].filter(Boolean);
+  
   return {
     id: viewportPlace.id,
     name: viewportPlace.name,
     address: '', // Viewport places don't include address
-    interests: [viewportPlace.category],
+    category: viewportPlace.category,
+    tags: tags,
+    interests: interests, // Keep for backward compatibility
     hiddenGem: false, // We'll need to fetch details to know if it's verified
     location: {
       lat: viewportPlace.lat,
@@ -146,23 +157,29 @@ export const usePlacesStore = defineStore('places', {
       if (state.searchQuery.trim()) {
         const q = state.searchQuery.toLowerCase();
         items = items.filter((p) =>
-          `${p.name} ${p.address} ${p.interests.join(' ')}`.toLowerCase().includes(q)
+          `${p.name} ${p.address} ${p.category} ${p.tags.join(' ')} ${p.interests.join(' ')}`.toLowerCase().includes(q)
         );
       }
 
-      // Apply interest/category filtering
+      // Apply interest/category/tags filtering
       if (state.selectedInterests.length > 0) {
         console.log('Filtering by interests:', state.selectedInterests);
         items = items.filter((p) => {
-          // Check if any of the place's interests match any of the selected interests
+          // Check if any of the place's category, tags, or interests match any of the selected interests
           // Compare case-insensitively
           const placeInterestsLower = p.interests.map(i => i.toLowerCase());
+          // Also check category and tags separately for more accurate matching
+          const allPlaceTags = [
+            p.category.toLowerCase(),
+            ...p.tags.map(t => t.toLowerCase()),
+            ...placeInterestsLower
+          ];
           const selectedInterestsLower = state.selectedInterests.map(i => i.toLowerCase());
-          const matches = placeInterestsLower.some(placeInterest => 
-            selectedInterestsLower.includes(placeInterest)
+          const matches = allPlaceTags.some(placeTag => 
+            selectedInterestsLower.includes(placeTag)
           );
           if (matches) {
-            console.log(`Place "${p.name}" matches category filter:`, p.interests);
+            console.log(`Place "${p.name}" matches filter:`, { category: p.category, tags: p.tags });
           }
           return matches;
         });
@@ -586,6 +603,10 @@ export const usePlacesStore = defineStore('places', {
                 const target = this.places.find(x => x.id === p.id);
                 if (target) {
                   target.address = details.address || '';
+                  target.category = details.category;
+                  target.tags = details.tags || [];
+                  // Update interests to include category + tags
+                  target.interests = [details.category, ...(details.tags || [])].filter(Boolean);
                   // Keep interests/category from viewport; hiddenGem can be refined
                   if (typeof details.verified === 'boolean') {
                     target.hiddenGem = !details.verified;

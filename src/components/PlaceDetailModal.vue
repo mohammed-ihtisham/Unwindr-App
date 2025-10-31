@@ -213,16 +213,29 @@
 
                     <!-- Optional badges removed per new design -->
 
-                    <!-- Interest Tags -->
+                    <!-- Category and Tags -->
                     <div class="mb-6">
-                      <h3 class="text-lg font-semibold text-gray-900 mb-3">Interests</h3>
+                      <h3 class="text-lg font-semibold text-gray-900 mb-3">Category & Tags</h3>
                       <div class="flex flex-wrap gap-2">
+                        <!-- Category (shown as primary) -->
                         <span
-                          v-for="interest in place.interests"
-                          :key="interest"
+                          class="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full border border-blue-200 font-medium"
+                        >
+                          {{ formatTagDisplay(place.category) }}
+                        </span>
+                        <!-- Tags -->
+                        <span
+                          v-for="tag in place.tags"
+                          :key="tag"
                           class="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full border border-blue-200"
                         >
-                          {{ interest }}
+                          {{ formatTagDisplay(tag) }}
+                        </span>
+                        <span
+                          v-if="place.tags.length === 0"
+                          class="px-3 py-1 bg-gray-50 text-gray-500 text-sm rounded-full border border-gray-200 italic"
+                        >
+                          No additional tags
                         </span>
                       </div>
                     </div>
@@ -278,6 +291,7 @@
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { ChevronLeft, MapPin, Grid3X3, ExternalLink, Bookmark } from 'lucide-vue-next';
 import { usePlacesStore } from '@/stores/usePlacesStore';
+import { useInterests } from '@/composables/useInterests';
 import MediaGallery from './MediaGallery.vue';
 
 const props = defineProps<{
@@ -291,6 +305,7 @@ const emit = defineEmits<{
 }>();
 
 const placesStore = usePlacesStore();
+const { formatTagDisplay } = useInterests();
 
 const BOOKMARKS_KEY = 'unwindr:bookmarks';
 const isBookmarked = ref(false);
