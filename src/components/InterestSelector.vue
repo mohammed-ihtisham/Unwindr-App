@@ -38,13 +38,8 @@ onMounted(async () => {
 
 // Computed properties
 const displayText = computed(() => {
-  if (props.selectedTags.length === 0) {
-    return 'Categories';
-  } else if (props.selectedTags.length === 1) {
-    return formatTagDisplay(props.selectedTags[0]);
-  } else {
-    return `${props.selectedTags.length} selected`;
-  }
+  const count = props.selectedTags.length;
+  return count === 0 ? 'Categories' : `${count} selected`;
 });
 
 const hasSelectedTags = computed(() => props.selectedTags.length > 0);
@@ -159,10 +154,13 @@ function toggleManualMode() {
     <!-- Trigger Button -->
     <button
       @click="openModal"
-      class="flex items-center gap-2 px-4 py-3 border border-earth-gray rounded-xl hover:bg-earth-cream transition-all duration-200 bg-white min-w-[140px] group shadow-sm"
+      :class="[
+        'relative flex items-center justify-center px-4 pr-9 py-2.5 rounded-2xl hover:ring-brand-300 hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-brand-300 transition-all duration-200 min-w-[160px] group shadow-sm ring-1',
+        hasSelectedTags ? 'bg-brand-50 ring-brand-300' : 'bg-white/60 ring-earth-gray/40'
+      ]"
     >
       <span class="text-earth-dark font-medium">{{ displayText }}</span>
-      <ChevronDown :size="16" class="text-earth-dark/50 group-hover:text-earth-dark transition-colors" />
+      <ChevronDown :size="16" class="text-earth-dark/50 group-hover:text-earth-dark transition-colors absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
     </button>
 
     <!-- Modal Overlay -->

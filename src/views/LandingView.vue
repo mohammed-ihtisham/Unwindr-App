@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, nextTick, watch } from 'vue';
+import { X } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { usePlacesStore, type ViewportBounds } from '@/stores/usePlacesStore';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -150,18 +151,29 @@ async function handleViewportChange(bounds: ViewportBounds) {
   // Load places for this viewport with preview images
   await placesStore.loadPlacesInViewport(bounds, true);
 }
+
+function clearAllFilters() {
+  placesStore.setQuery('');
+  placesStore.setDistance(null);
+  placesStore.setHiddenGems(false);
+  // Reset selected interests directly on the store for now
+  placesStore.selectedInterests = [];
+}
 </script>
 
 <template>
-  <div class="flex flex-col h-screen bg-earth-cream" :class="{ 'overflow-hidden': showAuthModal }">
+  <div class="flex flex-col h-screen bg-gradient-to-br from-surface-50 to-white p-3 sm:p-6" :class="{ 'overflow-hidden': showAuthModal }">
     <!-- Blur overlay when auth modal is open -->
     <div 
       v-if="showAuthModal && !authStore.isAuthenticated" 
       class="fixed inset-0 backdrop-blur-sm bg-earth-dark/20 z-[9998]"
     ></div>
     
+    <!-- App Shell Container -->
+    <div class="mx-auto w-full max-w-[1760px] 2xl:max-w-[1920px] h-[calc(100vh-1.5rem)] sm:h-[calc(100vh-3rem)] rounded-2xl md:rounded-3xl bg-white/80 backdrop-blur-xs shadow-card ring-1 ring-earth-gray/40 overflow-hidden flex flex-col">
+    
     <!-- Top Bar -->
-    <header class="flex-shrink-0 border-b border-earth-gray bg-white shadow-sm">
+    <header class="flex-shrink-0 border-b border-earth-gray/40 bg-white/60 backdrop-blur-xs relative z-40">
       <!-- Main Header -->
       <div class="px-6 py-3">
         <div class="flex items-center justify-center relative">
@@ -185,33 +197,51 @@ async function handleViewportChange(bounds: ViewportBounds) {
       </div>
 
       <!-- Search and Filter Bar -->
-      <div class="px-6 py-4 bg-earth-cream border-t border-earth-gray">
-        <!-- Search Row -->
-        <div class="flex items-center gap-3 mb-3">
-          <div class="flex-1">
-            <SearchBar
-              :model-value="searchQuery"
-              @update:model-value="placesStore.setQuery"
-            />
-          </div>
-          
-          <MileFilter
-            :model-value="distanceMiles"
-            @update:model-value="placesStore.setDistance"
-          />
-          <InterestSelector
-            :selected-tags="selectedInterests"
-            @update:selected-tags="(val) => (selectedInterests = val)"
-            @tags-generated="handleTagsGenerated"
-          />
-          <!-- Hidden Gems Toggle -->
-          <div class="flex items-center gap-2 px-4 py-3 border border-earth-gray rounded-xl bg-white shadow-sm">
-            <span class="text-sm text-earth-dark font-medium">Hidden Gems</span>
-            <ToggleSwitch
-              :model-value="showHiddenGems"
-              @update:model-value="placesStore.setHiddenGems"
-              label="Toggle hidden gems"
-            />
+      <div class="px-6 py-4 bg-surface-50/80 border-t border-earth-gray/40 relative z-40">
+        <!-- Floating toolbar -->
+        <div class="w-full rounded-2xl bg-white/70 backdrop-blur-xs ring-1 ring-earth-gray/40 shadow-soft relative z-50">
+          <div class="flex items-center gap-3 p-3 md:p-3.5 overflow-x-auto">
+            <div class="flex-1 min-w-[730px]">
+              <SearchBar
+                :model-value="searchQuery"
+                @update:model-value="placesStore.setQuery"
+              />
+            </div>
+
+            <div class="flex items-center gap-2 md:gap-3 w-full lg:w-[600px] xl:w-[700px] justify-end">
+              <MileFilter
+                :model-value="distanceMiles"
+                @update:model-value="placesStore.setDistance"
+              />
+              <InterestSelector
+                :selected-tags="selectedInterests"
+                @update:selected-tags="(val) => (selectedInterests = val)"
+                @tags-generated="handleTagsGenerated"
+              />
+              <!-- Hidden Gems Toggle -->
+              <div
+                :class="[
+                  'flex items-center gap-2 px-4 py-2.5 rounded-2xl ring-1 hover:ring-brand-300 focus-within:ring-2 focus-within:ring-brand-300 transition-all duration-200',
+                  showHiddenGems ? 'bg-brand-50 ring-brand-300' : 'bg-white/60 ring-earth-gray/40'
+                ]"
+              >
+                <span class="text-sm text-earth-dark font-medium">Hidden Gems</span>
+                <ToggleSwitch
+                  :model-value="showHiddenGems"
+                  @update:model-value="placesStore.setHiddenGems"
+                  label="Toggle hidden gems"
+                />
+              </div>
+
+              <button
+                v-if="hasActiveFilters"
+                @click="clearAllFilters"
+                class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-earth-dark/70 hover:text-earth-dark rounded-xl hover:bg-earth-dark/5 transition-colors"
+              >
+                <X :size="16" />
+                Clear
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -220,7 +250,7 @@ async function handleViewportChange(bounds: ViewportBounds) {
     <!-- Main Content -->
     <div class="flex-1 flex overflow-hidden">
       <!-- Map Section -->
-      <div class="flex-1 relative">
+      <div class="flex-1 relative p-4 md:p-6">
         <MapCanvas
           ref="mapCanvasRef"
           :center="mapCenter"
@@ -256,7 +286,7 @@ async function handleViewportChange(bounds: ViewportBounds) {
       </div>
 
       <!-- Places Panel -->
-      <div class="w-full lg:w-[600px] xl:w-[700px] border-l border-earth-gray bg-white">
+      <div class="w-full lg:w-[600px] xl:w-[700px] border-l border-earth-gray/40 bg-white/80 backdrop-blur-xs">
         <PlacesPanel
           ref="placesPanelRef"
           :places="allPlaces"
@@ -275,6 +305,8 @@ async function handleViewportChange(bounds: ViewportBounds) {
         />
       </div>
     </div>
+
+    </div> <!-- End App Shell Container -->
 
     <!-- Auth Modal -->
     <AuthModal 

@@ -11,6 +11,7 @@ const emit = defineEmits<{
 }>();
 
 const inputValue = ref(props.modelValue);
+const inputRef = ref<HTMLInputElement | null>(null);
 let debounceTimer: number | null = null;
 
 watch(
@@ -36,34 +37,33 @@ function clearSearch() {
   inputValue.value = '';
   emit('update:modelValue', '');
 }
+
 </script>
 
 <template>
-  <div class="relative flex items-center w-full max-w-2xl">
-    <div class="absolute left-3 text-earth-dark/50">
-      <Search :size="20" />
-    </div>
+  <div class="relative w-full">
     <input
       v-model="inputValue"
       type="text"
-      placeholder="Enter city, neighborhood, or address"
-      class="w-full pl-10 pr-20 py-3 border border-earth-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-earth-dark focus:border-earth-dark text-lg bg-white shadow-sm transition-all"
+      ref="inputRef"
+      placeholder="Discover your next favorite spot"
+      class="w-full pl-4 pr-24 py-3 border border-earth-gray/40 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-300 text-[15px] bg-white/70 backdrop-blur-xs shadow-sm transition-all placeholder-earth-dark/50"
       @keydown.enter="handleSearch"
     />
     <button
       v-if="inputValue"
       @click="clearSearch"
-      class="absolute right-12 text-earth-dark/50 hover:text-earth-dark transition-colors"
+      class="absolute right-14 top-1/2 -translate-y-1/2 text-earth-dark/50 hover:text-earth-dark transition-colors"
       aria-label="Clear search"
     >
       <X :size="18" />
     </button>
     <button
       @click="handleSearch"
-      class="absolute right-2 px-4 py-2 bg-earth-dark text-white rounded-xl hover:bg-earth-dark/90 transition-all font-medium shadow-md hover:shadow-lg hover:scale-105"
+      class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-earth-dark text-white flex items-center justify-center hover:bg-earth-dark/90 shadow-md hover:shadow-lg transition-transform hover:scale-105"
       aria-label="Search"
     >
-      Search
+      <Search :size="18" />
     </button>
   </div>
 </template>

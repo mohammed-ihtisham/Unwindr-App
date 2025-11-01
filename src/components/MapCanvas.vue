@@ -272,12 +272,12 @@ defineExpose({
 </script>
 
 <template>
-  <div class="relative w-full h-full rounded-lg overflow-hidden">
+  <div class="relative w-full h-full rounded-[28px] overflow-hidden ring-1 ring-earth-gray/40 shadow-soft bg-white">
     <div ref="mapContainer" class="w-full h-full" />
     <!-- Loading overlay -->
     <div 
       v-if="isLoading" 
-      class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10"
+      class="absolute inset-0 bg-white/70 flex items-center justify-center z-10 backdrop-blur-xs"
     >
       <div class="text-center">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>

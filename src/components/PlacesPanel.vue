@@ -98,10 +98,10 @@ defineExpose({
 <template>
   <div
     ref="panelRef"
-    class="flex flex-col h-full bg-white overflow-y-auto"
+    class="flex flex-col h-full bg-white/80 backdrop-blur-xs overflow-y-auto"
   >
     <!-- Header -->
-    <div class="sticky top-0 bg-white border-b border-earth-gray px-6 py-4 z-10 shadow-sm">
+    <div class="sticky top-0 bg-white/90 backdrop-blur-xs border-b border-earth-gray/40 px-6 py-4 z-10 shadow-sm">
       <div class="flex items-center justify-between">
         <div>
           <h2 class="text-2xl font-semibold text-earth-dark">Places</h2>

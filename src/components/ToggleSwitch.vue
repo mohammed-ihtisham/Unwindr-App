@@ -17,7 +17,7 @@ function toggle() {
   <button
     @click="toggle"
       :class="[
-        'relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-earth-dark focus:ring-offset-2',
+        'relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-300 focus:ring-offset-2',
         modelValue ? 'bg-earth-dark' : 'bg-earth-gray',
       ]"
     role="switch"
