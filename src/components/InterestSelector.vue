@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { Sparkles, Plus, X, Wand2, Tag, ChevronDown } from 'lucide-vue-next';
 import { interestFilterService } from '@/lib/api/services/interestFilter';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -27,9 +27,18 @@ const authStore = useAuthStore();
 // Component state
 const showModal = ref(false);
 const descriptionInput = ref('');
+const descriptionEl = ref<HTMLTextAreaElement | null>(null);
 const isGenerating = ref(false);
 const showManualMode = ref(false);
 const apiError = ref<string | null>(null);
+
+// Example prompts to inspire users (click to insert)
+const suggestionPrompts = [
+  'cozy coffee shops',
+  'romantic dinner spots',
+  'kid‑friendly parks',
+  'lively bars',
+];
 
 // Load tags from API on mount
 onMounted(async () => {
@@ -110,11 +119,13 @@ async function generateTags() {
       // Auto-apply tags and trigger search
       emit('tagsGenerated', generatedTags);
       
-      // Close modal automatically after successful generation
-      showModal.value = false;
-      descriptionInput.value = '';
-      showManualMode.value = false;
-      apiError.value = null;
+      // Briefly show generated tags in the modal, then close
+      setTimeout(() => {
+        showModal.value = false;
+        descriptionInput.value = '';
+        showManualMode.value = false;
+        apiError.value = null;
+      }, 600);
     } else {
       apiError.value = 'No relevant tags found for your description. Try being more specific or use manual selection.';
     }
@@ -147,6 +158,39 @@ function toggleManualMode() {
   showManualMode.value = !showManualMode.value;
 }
 
+function clearAllTags() {
+  emit('update:selectedTags', []);
+}
+
+function handleKeydown(event: KeyboardEvent) {
+  if (!showModal.value) return;
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeModal();
+  }
+  // Cmd/Ctrl + Enter triggers AI generation when focused in description mode
+  if (!showManualMode.value && (event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+    event.preventDefault();
+    if (descriptionInput.value.trim() && !isGenerating.value) {
+      generateTags();
+    }
+  }
+}
+
+watch(showModal, async (isOpen) => {
+  if (isOpen) {
+    window.addEventListener('keydown', handleKeydown);
+    await nextTick();
+    descriptionEl.value?.focus();
+  } else {
+    window.removeEventListener('keydown', handleKeydown);
+  }
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown);
+});
+
 </script>
 
 <template>
@@ -165,15 +209,17 @@ function toggleManualMode() {
 
     <!-- Modal Overlay -->
     <Teleport to="body">
-      <div
-        v-if="showModal"
-        class="fixed inset-0 bg-black/20 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
-        @click="closeModal"
-      >
+      <Transition name="fade">
         <div
-          class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden relative z-[10000]"
-          @click.stop
+          v-if="showModal"
+          class="fixed inset-0 bg-black/30 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
+          @click="closeModal"
         >
+          <Transition name="zoom">
+            <div
+              class="bg-white/95 backdrop-blur rounded-3xl shadow-2xl ring-1 ring-black/5 max-w-2xl w-full max-h-[90vh] overflow-hidden relative z-[10000]"
+              @click.stop
+            >
         <!-- Modal Header -->
         <div class="p-6 border-b border-gray-100">
           <div class="flex items-center justify-between">
@@ -196,22 +242,26 @@ function toggleManualMode() {
         </div>
 
         <!-- Modal Content -->
-        <div class="p-6 space-y-6">
+        <div class="p-6 space-y-6 min-h-[400px] max-h-[400px] overflow-y-auto">
           <!-- Description Input Section -->
-          <div v-if="!showManualMode" class="space-y-4">
+          <div v-if="!showManualMode" class="space-y-3 -mt-1">
             <div class="relative">
               <textarea
                 v-model="descriptionInput"
                 placeholder="e.g., 'cozy coffee shops with great wifi for remote work' or 'romantic dinner spots with outdoor seating'"
-                class="w-full p-4 border border-earth-gray rounded-xl resize-none focus:ring-2 focus:ring-earth-dark focus:border-earth-dark transition-all duration-200 placeholder-earth-dark/50 bg-white"
-                rows="3"
+                class="w-full p-4 border border-earth-gray rounded-xl resize-none focus:ring-2 focus:ring-earth-dark focus:border-earth-dark transition-all duration-200 placeholder-earth-dark/50 bg-white min-h-[120px]"
+                rows="4"
                 :disabled="isGenerating"
+                ref="descriptionEl"
               ></textarea>
-              <div class="absolute bottom-3 right-3">
+              <div class="absolute bottom-4 right-3">
                 <button
                   @click="generateTags"
                   :disabled="!descriptionInput.trim() || isGenerating"
-                  class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-earth-dark to-earth-dark/80 text-white rounded-xl hover:from-earth-dark/90 hover:to-earth-dark/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105"
+                  :class="[
+                    'flex items-center gap-2 px-4 py-2 bg-earth-dark text-white rounded-xl hover:bg-earth-dark/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md',
+                    { 'glow-pulse': isGenerating }
+                  ]"
                 >
                   <Sparkles v-if="!isGenerating" :size="16" />
                   <div v-else class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -220,8 +270,24 @@ function toggleManualMode() {
               </div>
             </div>
 
+            <!-- Keyboard hint -->
+            <div class="text-xs text-gray-400 -mt-2">Cmd/Ctrl+Enter to generate</div>
+
+            <!-- Single-line examples row -->
+            <div class="flex items-center gap-2 whitespace-nowrap overflow-x-auto no-scrollbar">
+              <button
+                v-for="s in suggestionPrompts"
+                :key="s"
+                type="button"
+                class="px-3 py-1.5 rounded-full text-sm bg-earth-cream text-earth-dark hover:bg-earth-cream/70 border border-earth-gray/60 transition-colors"
+                @click="descriptionInput = s; nextTick(() => descriptionEl?.focus());"
+              >
+                {{ s }}
+              </button>
+            </div>
+
             <!-- Manual Mode Toggle -->
-            <div class="flex items-center justify-center">
+            <div class="flex items-center justify-center pt-5">
               <button
                 @click.stop="toggleManualMode"
                 class="flex items-center gap-2 text-sm text-earth-khaki hover:text-earth-khaki/80 font-medium transition-colors pointer-events-auto"
@@ -236,11 +302,6 @@ function toggleManualMode() {
 
           <!-- Manual Tag Selection Section -->
           <div v-if="showManualMode" class="space-y-4">
-            <!-- Debug info -->
-            <div class="p-3 bg-blue-50 border border-blue-200 rounded text-sm">
-              Debug: isLoadingTags = {{ isLoadingTags }}, tagOptions.length = {{ tagOptions.length }}
-            </div>
-            
             <div class="space-y-3">
               <h3 class="text-sm font-medium text-gray-700">Select from available categories</h3>
               
@@ -258,26 +319,27 @@ function toggleManualMode() {
               </div>
               
               <!-- Categories list -->
-              <div v-else class="max-h-64 overflow-y-auto space-y-2 pr-2">
-                <button
-                  v-for="option in tagOptions"
-                  :key="option.tag"
-                  @click="toggleTag(option.tag)"
-                  :class="[
-                    'w-full text-left px-3 py-2.5 rounded-xl transition-all duration-200 border',
-                    selectedTags.includes(option.tag)
-                      ? 'bg-earth-dark/10 border-earth-dark/30 text-earth-dark shadow-sm'
-                      : 'bg-white border-earth-gray text-earth-dark hover:bg-earth-cream hover:border-earth-gray'
-                  ]"
-                >
-                  <div class="font-medium text-sm">{{ formatTagDisplay(option.tag) }}</div>
-                  <div class="text-xs text-gray-500 mt-0.5">{{ option.description }}</div>
-                </button>
+              <div v-else class="max-h-44 overflow-y-auto pr-1">
+                <div class="grid grid-cols-3 gap-2">
+                  <button
+                    v-for="option in tagOptions"
+                    :key="option.tag"
+                    @click="toggleTag(option.tag)"
+                    :class="[
+                      'px-3 py-2 rounded-full border text-sm transition-all duration-200',
+                      selectedTags.includes(option.tag)
+                        ? 'bg-earth-dark text-white border-earth-dark shadow-sm'
+                        : 'bg-white text-earth-dark border-earth-gray hover:bg-earth-cream'
+                    ]"
+                  >
+                    {{ formatTagDisplay(option.tag) }}
+                  </button>
+                </div>
               </div>
             </div>
 
             <!-- Back to Description -->
-            <div class="flex items-center justify-center">
+            <div class="flex items-center justify-center pt-3.5">
               <button
                 @click.stop="toggleManualMode"
                 class="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-700 font-medium transition-colors pointer-events-auto"
@@ -323,8 +385,9 @@ function toggleManualMode() {
         <!-- Modal Footer -->
         <div class="p-6 border-t border-gray-100 bg-gray-50">
           <div class="flex items-center justify-between">
-            <div class="text-sm text-gray-500">
-              {{ selectedTags.length }} tag{{ selectedTags.length !== 1 ? 's' : '' }} selected
+            <div class="flex items-center gap-3 text-sm text-gray-600">
+              <span>{{ selectedTags.length }} tag{{ selectedTags.length !== 1 ? 's' : '' }} selected</span>
+              <button v-if="selectedTags.length" @click="clearAllTags" class="underline hover:text-gray-800">Clear all</button>
             </div>
             <div class="flex items-center gap-3">
               <button
@@ -335,15 +398,18 @@ function toggleManualMode() {
               </button>
               <button
                 @click="closeModal"
-                class="px-6 py-2 bg-earth-dark text-white rounded-xl hover:bg-earth-dark/90 font-medium transition-all shadow-md hover:shadow-lg hover:scale-105"
+                :disabled="selectedTags.length === 0"
+                class="px-6 py-2 bg-earth-dark text-white rounded-xl hover:bg-earth-dark/90 font-medium transition-all shadow-md hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Apply Tags
               </button>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
     </Teleport>
   </div>
 </template>
@@ -375,15 +441,44 @@ textarea::-webkit-scrollbar-thumb:hover {
   transition-duration: 200ms;
 }
 
+/* Hide scrollbar for examples row */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Vue transition classes */
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+.fade-enter-active, .fade-leave-active { transition: opacity 200ms ease; }
+
+.zoom-enter-from { opacity: 0; transform: scale(0.98); }
+.zoom-enter-active { transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1); }
+.zoom-leave-to { opacity: 0; transform: scale(0.98); }
+.zoom-leave-active { transition: all 150ms ease; }
+
 /* Focus states */
 textarea:focus,
 input:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  /* subtle dark-brown glow to match earth-dark focus */
+  box-shadow: 0 0 0 3px rgba(63, 45, 35, 0.18);
+  border-color: #3f2d23 !important;
 }
 
 /* Ensure typed text is visible */
 textarea, input {
   color: #1f2937 !important;
+}
+
+/* Match caret to dark-brown brand */
+textarea { caret-color: #3f2d23; }
+
+/* Glow animation for generate button while generating */
+@keyframes glow-brown {
+  0% { box-shadow: 0 0 0 0 rgba(63, 45, 35, 0.45); }
+  70% { box-shadow: 0 0 0 12px rgba(63, 45, 35, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(63, 45, 35, 0); }
+}
+
+.glow-pulse {
+  animation: glow-brown 1.1s ease-out infinite;
 }
 </style>

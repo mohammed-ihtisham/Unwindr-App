@@ -42,7 +42,7 @@ onMounted(() => {
   // Initialize map
   map = L.map(mapContainer.value, {
     center: [props.center.lat, props.center.lng],
-    zoom: 16, // Start more zoomed in so initial places load immediately
+    zoom: 15, // Start slightly more zoomed out on initial load
   });
 
   // Add tile layer
