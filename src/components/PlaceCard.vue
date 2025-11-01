@@ -327,7 +327,7 @@ function switchToIndex(idx: number) {
       <div class="flex flex-wrap gap-1 mb-3">
         <!-- Category (always shown first as primary tag) -->
         <span
-          class="px-2 py-1 bg-earth-dark/10 text-earth-dark text-xs rounded-full border border-earth-dark/20 font-medium"
+          class="px-2 py-1 bg-brand-300 text-white text-xs rounded-full border border-brand-300 font-medium"
         >
           {{ formatTagDisplay(place.category) }}
         </span>
@@ -335,7 +335,7 @@ function switchToIndex(idx: number) {
         <span
           v-for="tag in place.tags.slice(0, 2)"
           :key="tag"
-          class="px-2 py-1 bg-earth-khaki/10 text-earth-khaki text-xs rounded-full border border-earth-khaki/20"
+          class="px-2 py-1 bg-earth-khaki text-white text-xs rounded-full border border-earth-khaki"
         >
           {{ formatTagDisplay(tag) }}
         </span>

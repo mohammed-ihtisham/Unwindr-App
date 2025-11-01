@@ -69,6 +69,7 @@ body {
     background-color 0.5s;
   line-height: 1.6;
   font-family:
+    Manrope,
     Inter,
     -apple-system,
     BlinkMacSystemFont,
@@ -82,6 +83,7 @@ body {
     'Helvetica Neue',
     sans-serif;
   font-size: 15px;
+  font-optical-sizing: auto;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

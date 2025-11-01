@@ -199,12 +199,20 @@ onBeforeUnmount(() => {
     <button
       @click="openModal"
       :class="[
-        'relative flex items-center justify-center px-4 pr-9 py-2.5 rounded-2xl hover:ring-brand-300 hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-brand-300 transition-all duration-200 min-w-[160px] group shadow-sm ring-1',
-        hasSelectedTags ? 'bg-brand-50 ring-brand-300' : 'bg-white/60 ring-earth-gray/40'
+        'relative flex items-center justify-center px-4 pr-9 py-2.5 rounded-full focus:outline-none transition-all duration-200 min-w-[160px] group ring-1',
+        hasSelectedTags
+          ? 'bg-brand-50 ring-brand-300 hover:bg-brand-50/80'
+          : 'bg-white ring-earth-gray/40 hover:bg-white/70'
       ]"
     >
       <span class="text-earth-dark font-medium">{{ displayText }}</span>
-      <ChevronDown :size="16" class="text-earth-dark/50 group-hover:text-earth-dark transition-colors absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+      <ChevronDown
+        :size="16"
+        :class="[
+          'transition-colors absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none',
+          hasSelectedTags ? 'text-earth-khaki' : 'text-earth-dark/50 group-hover:text-earth-dark'
+        ]"
+      />
     </button>
 
     <!-- Modal Overlay -->
@@ -328,7 +336,7 @@ onBeforeUnmount(() => {
                     :class="[
                       'px-3 py-2 rounded-full border text-sm transition-all duration-200',
                       selectedTags.includes(option.tag)
-                        ? 'bg-earth-dark text-white border-earth-dark shadow-sm'
+                        ? 'bg-brand-50 text-earth-dark border-brand-300'
                         : 'bg-white text-earth-dark border-earth-gray hover:bg-earth-cream'
                     ]"
                   >
@@ -367,12 +375,12 @@ onBeforeUnmount(() => {
               <span
                 v-for="tag in selectedTags"
                 :key="tag"
-                class="inline-flex items-center gap-2 px-3 py-2 bg-earth-dark/10 text-earth-dark text-sm rounded-full border border-earth-dark/20"
+                class="inline-flex items-center gap-2 px-3 py-2 bg-earth-khaki text-white text-sm rounded-full border border-earth-khaki"
               >
                 {{ formatTagDisplay(tag) }}
                 <button
                   @click="removeTag(tag)"
-                  class="hover:bg-earth-dark/20 rounded-full p-0.5 transition-colors"
+                  class="hover:bg-white/20 rounded-full p-0.5 transition-colors"
                 >
                   <X :size="12" />
                 </button>

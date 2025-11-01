@@ -234,7 +234,7 @@
                       <div class="flex flex-wrap gap-2">
                         <!-- Category (shown as primary) -->
                         <span
-                          class="px-3 py-1 bg-earth-dark/10 text-earth-dark text-sm rounded-full border border-earth-dark/20 font-medium"
+                          class="px-3 py-1 bg-brand-300 text-white text-sm rounded-full border border-brand-300 font-medium"
                         >
                           {{ formatTagDisplay(place.category) }}
                         </span>
@@ -242,7 +242,7 @@
                         <span
                           v-for="tag in place.tags"
                           :key="tag"
-                          class="px-3 py-1 bg-earth-khaki/10 text-earth-khaki text-sm rounded-full border border-earth-khaki/20"
+                          class="px-3 py-1 bg-earth-khaki text-white text-sm rounded-full border border-earth-khaki"
                         >
                           {{ formatTagDisplay(tag) }}
                         </span>
