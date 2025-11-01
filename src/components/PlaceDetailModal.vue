@@ -55,88 +55,107 @@
             <!-- Content -->
             <div class="overflow-y-auto max-h-[calc(90vh-80px)]">
               <div v-if="place" class="bg-white">
-                <!-- Photo Gallery Section - Zillow Style -->
+                <!-- Photo Gallery Section - Consistent Grid with Placeholders -->
                 <div class="relative">
                   <div class="grid grid-cols-5 gap-2 h-96 lg:h-[28rem]">
-                    <!-- Main Image (Left Column) - Horizontal -->
+                    <!-- Main Image (Left Column) -->
                     <div class="col-span-3 relative overflow-hidden rounded-l-lg">
-                      <div v-if="sortedImages[0]" class="relative w-full h-full">
-                        <img
-                          :src="sortedImages[0]"
-                          :alt="place.name"
-                          loading="lazy"
-                          decoding="async"
-                          @error="(e) => ((e.target as HTMLImageElement).style.display='none')"
-                          @load="() => loadedSet.add(sortedImages[0])"
-                          class="w-full h-full object-cover cursor-pointer"
-                          @click="openFullGallery"
-                        />
-                      </div>
                       <div
-                        v-else
-                        class="w-full h-full flex items-center justify-center bg-gradient-to-br from-earth-dark to-earth-dark/80"
-                      >
-                        <MapPin :size="48" class="text-white opacity-50" />
-                      </div>
+                        class="absolute inset-0 flex items-center justify-center rounded-l-lg z-20 transition-opacity duration-300 pointer-events-none"
+                        :class="{
+                          'opacity-0': sortedImages[0] && overlayHidden.has(sortedImages[0]),
+                          'animate-pulse': !(sortedImages[0] && overlayHidden.has(sortedImages[0]))
+                        }"
+                        style="background: linear-gradient(135deg,#4b3a29 0%, #7a5a3b 100%);"
+                      ></div>
+                      <img
+                        :key="sortedImages[0]"
+                        v-if="sortedImages[0]"
+                        :src="sortedImages[0]"
+                        :alt="place.name"
+                        loading="lazy"
+                        decoding="async"
+                        @error="(e) => ((e.target as HTMLImageElement).style.display='none')"
+                        @load="() => handleImageLoad(sortedImages[0])"
+                        class="relative z-10 w-full h-full object-cover cursor-pointer"
+                        @click="openFullGallery"
+                      />
                     </div>
 
                     <!-- Middle Column (2 vertically stacked) -->
                     <div class="col-span-1 flex flex-col gap-2">
-                      <div
-                        v-if="sortedImages[1]"
-                        class="flex-1 relative overflow-hidden cursor-pointer rounded"
-                        @click="openFullGallery"
-                      >
+                      <div class="flex-1 relative overflow-hidden cursor-pointer rounded" @click="openFullGallery">
+                        <div
+                          class="absolute inset-0 flex items-center justify-center rounded z-20 transition-opacity duration-300 pointer-events-none"
+                          :class="{
+                            'opacity-0': sortedImages[1] && overlayHidden.has(sortedImages[1]),
+                            'animate-pulse': !(sortedImages[1] && overlayHidden.has(sortedImages[1]))
+                          }"
+                          style="background: linear-gradient(135deg,#4b3a29 0%, #7a5a3b 100%);"
+                        ></div>
                         <img
+                          :key="sortedImages[1]"
+                          v-if="sortedImages[1]"
                           :src="sortedImages[1]"
                           :alt="`${place.name} image 2`"
                           loading="lazy"
                           decoding="async"
                           @error="(e) => ((e.target as HTMLImageElement).style.display='none')"
-                          @load="() => loadedSet.add(sortedImages[1])"
-                          class="w-full h-full object-cover"
+                          @load="() => handleImageLoad(sortedImages[1])"
+                          class="relative z-10 w-full h-full object-cover"
                         />
                       </div>
-                      <div
-                        v-if="sortedImages[2]"
-                        class="flex-1 relative overflow-hidden cursor-pointer rounded"
-                        @click="openFullGallery"
-                      >
+                      <div class="flex-1 relative overflow-hidden cursor-pointer rounded" @click="openFullGallery">
+                        <div
+                          class="absolute inset-0 flex items-center justify-center rounded z-20 transition-opacity duration-300 pointer-events-none"
+                          :class="{
+                            'opacity-0': sortedImages[2] && overlayHidden.has(sortedImages[2]),
+                            'animate-pulse': !(sortedImages[2] && overlayHidden.has(sortedImages[2]))
+                          }"
+                          style="background: linear-gradient(135deg,#4b3a29 0%, #7a5a3b 100%);"
+                        ></div>
                         <img
+                          :key="sortedImages[2]"
+                          v-if="sortedImages[2]"
                           :src="sortedImages[2]"
                           :alt="`${place.name} image 3`"
                           loading="lazy"
                           decoding="async"
                           @error="(e) => ((e.target as HTMLImageElement).style.display='none')"
-                          @load="() => loadedSet.add(sortedImages[2])"
-                          class="w-full h-full object-cover"
+                          @load="() => handleImageLoad(sortedImages[2])"
+                          class="relative z-10 w-full h-full object-cover"
                         />
                       </div>
                     </div>
 
                     <!-- Right Column (2 vertically stacked) -->
                     <div class="col-span-1 flex flex-col gap-2">
-                      <div
-                        v-if="sortedImages[3]"
-                        class="flex-1 relative overflow-hidden cursor-pointer rounded"
-                        @click="openFullGallery"
-                      >
+                      <div class="flex-1 relative overflow-hidden cursor-pointer rounded" @click="openFullGallery">
+                        <div
+                          class="absolute inset-0 flex items-center justify-center rounded z-20 transition-opacity duration-300 pointer-events-none"
+                          :class="{
+                            'opacity-0': sortedImages[3] && overlayHidden.has(sortedImages[3]),
+                            'animate-pulse': !(sortedImages[3] && overlayHidden.has(sortedImages[3]))
+                          }"
+                          style="background: linear-gradient(135deg,#4b3a29 0%, #7a5a3b 100%);"
+                        ></div>
                         <img
+                          :key="sortedImages[3]"
+                          v-if="sortedImages[3]"
                           :src="sortedImages[3]"
                           :alt="`${place.name} image 4`"
                           loading="lazy"
                           decoding="async"
                           @error="(e) => ((e.target as HTMLImageElement).style.display='none')"
-                          @load="() => loadedSet.add(sortedImages[3])"
-                          class="w-full h-full object-cover"
+                          @load="() => handleImageLoad(sortedImages[3])"
+                          class="relative z-10 w-full h-full object-cover"
                         />
                       </div>
                       <div
-                        v-if="sortedImages[4] || place.imagesUrl"
                         class="flex-1 relative overflow-hidden cursor-pointer rounded group"
                         @click="place.imagesUrl ? openExternalGallery(place.imagesUrl) : openFullGallery()"
-                        :title="place.imagesUrl ? 'See more photos' : `${place.name} image 5`"
-                        :aria-label="place.imagesUrl ? 'See more photos' : `${place.name} image 5`"
+                        :title="place.imagesUrl ? 'See more photos' : `${place?.name ?? 'Place'} image 5`"
+                        :aria-label="place.imagesUrl ? 'See more photos' : `${place?.name ?? 'Place'} image 5`"
                       >
                         <template v-if="place.imagesUrl">
                           <!-- Modern gradient/glass tile for external gallery -->
@@ -146,11 +165,8 @@
                                    text-white shadow-lg hover:shadow-2xl transition-all duration-200
                                    hover:scale-[1.02] border border-white/20"
                           >
-                            <!-- Decorative sheen -->
                             <div class="absolute inset-0 bg-gradient-to-tr from-white/20 via-transparent to-white/10 mix-blend-overlay pointer-events-none"></div>
                             <div class="absolute inset-0 backdrop-blur-[2px]"></div>
-
-                            <!-- Content -->
                             <div class="relative z-10 h-full w-full flex items-center justify-center p-3">
                               <div class="text-center">
                                 <div class="flex items-center justify-center gap-2">
@@ -165,27 +181,26 @@
                           <div class="absolute inset-0 rounded-lg ring-0 group-hover:ring-2 ring-white/50 pointer-events-none"></div>
                         </template>
                         <template v-else>
+                          <div
+                            class="absolute inset-0 flex items-center justify-center rounded z-20 transition-opacity duration-300 pointer-events-none"
+                            :class="{
+                              'opacity-0': sortedImages[4] && overlayHidden.has(sortedImages[4]),
+                              'animate-pulse': !(sortedImages[4] && overlayHidden.has(sortedImages[4]))
+                            }"
+                            style="background: linear-gradient(135deg,#4b3a29 0%, #7a5a3b 100%);"
+                          ></div>
                           <img
+                            :key="sortedImages[4]"
+                            v-if="sortedImages[4]"
                             :src="sortedImages[4]"
-                            :alt="`${place.name} image 5`"
+                            :alt="`${place?.name ?? 'Place'} image 5`"
                             loading="lazy"
                             decoding="async"
                             @error="(e) => ((e.target as HTMLImageElement).style.display='none')"
-                            @load="() => loadedSet.add(sortedImages[4])"
-                            class="w-full h-full object-cover"
+                            @load="() => handleImageLoad(sortedImages[4])"
+                            class="relative z-10 w-full h-full object-cover"
                           />
                         </template>
-                      </div>
-                      <!-- See More Button (if more than 5 images) -->
-                      <div
-                        v-if="place.images.length > 5"
-                        class="flex-1 relative overflow-hidden cursor-pointer bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors rounded"
-                        @click="openFullGallery"
-                      >
-                        <div class="text-center text-gray-700">
-                          <Grid3X3 :size="24" class="mx-auto mb-2" />
-                          <div class="text-sm font-medium">See all {{ place.images.length }} photos</div>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -312,6 +327,7 @@ const isBookmarked = ref(false);
 const showFullGallery = ref(false);
 const isLoading = ref(false);
 const loadedSet = ref<Set<string>>(new Set());
+const overlayHidden = ref<Set<string>>(new Set());
 
 const sortedImages = computed(() => {
   const imgs = (place.value?.images || []).filter((u) => !!u);
@@ -320,6 +336,14 @@ const sortedImages = computed(() => {
   imgs.forEach((u) => (loadedSet.value.has(u) ? loaded.push(u) : pending.push(u)));
   return [...loaded, ...pending];
 });
+
+function handleImageLoad(url?: string) {
+  if (!url) return;
+  loadedSet.value.add(url);
+  const next = new Set(overlayHidden.value);
+  next.add(url);
+  overlayHidden.value = next;
+}
 
 const place = computed(() => {
   if (!props.placeId) return null;
@@ -405,6 +429,9 @@ watch(
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       document.addEventListener('keydown', handleKeydown);
+      // Reset image loaded state so placeholders display when opening
+      loadedSet.value = new Set<string>();
+      overlayHidden.value = new Set<string>();
       // If requested, fetch full media and open gallery automatically
       if (props.autoOpenGallery && props.placeId) {
         try {
@@ -419,6 +446,15 @@ watch(
       document.body.style.overflow = '';
       document.removeEventListener('keydown', handleKeydown);
     }
+  }
+);
+
+// Also reset when changing places to ensure placeholders show
+watch(
+  () => props.placeId,
+  () => {
+    loadedSet.value = new Set<string>();
+    overlayHidden.value = new Set<string>();
   }
 );
 

@@ -11,6 +11,36 @@
   padding: 0;
 }
 
+/* Solid brown pulsing (no transparency) */
+.pulse-brown {
+  animation: pulse-brown 1.2s ease-in-out infinite;
+}
+@keyframes pulse-brown {
+  0%, 100% {
+    background: linear-gradient(135deg, #4b3a29 0%, #7a5a3b 100%);
+  }
+  50% {
+    background: linear-gradient(135deg, #3c2e22 0%, #6a4f36 100%);
+  }
+}
+
+/* Preferred loading shimmer: solid dark-brown base with moving highlight */
+.loading-brown {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #4b3a29 0%, #7a5a3b 100%);
+}
+.loading-brown::after {
+  content: '';
+  position: absolute;
+  inset: -50% -50%;
+  background: linear-gradient(110deg, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.06) 80%);
+  transform: translateX(-100%);
+  animation: shimmer-sweep 1.1s linear infinite;
+  will-change: transform;
+  pointer-events: none;
+}
+
 /* Ensure modals appear above Leaflet maps */
 .leaflet-control-container {
   z-index: 1000;
@@ -23,4 +53,23 @@
 /* Modal z-index override for any conflicts */
 .modal-backdrop {
   z-index: 9999 !important;
+}
+
+/* Soft shimmering sweep for image placeholders (brown theme) */
+.shimmer-brown {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-brown::after {
+  content: '';
+  position: absolute;
+  inset: -50% -50%;
+  background: linear-gradient(135deg, #4b3a29 0%, #7a5a3b 100%);
+  transform: translateX(-100%);
+  animation: shimmer-sweep 1.1s linear infinite;
+  will-change: transform;
+  pointer-events: none;
+}
+@keyframes shimmer-sweep {
+  100% { transform: translateX(100%); }
 }

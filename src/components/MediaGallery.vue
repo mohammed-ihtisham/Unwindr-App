@@ -17,6 +17,8 @@ const touchStartX = ref(0);
 const touchStartY = ref(0);
 const zoom = ref(1);
 const rotation = ref(0);
+const mainLoaded = ref(false);
+const loadedThumbs = ref<Set<number>>(new Set());
 
 const currentImage = computed(() => props.images[currentIndex.value]);
 
@@ -28,9 +30,19 @@ watch(
       zoom.value = 1;
       rotation.value = 0;
       document.body.style.overflow = 'hidden';
+      mainLoaded.value = false;
+      loadedThumbs.value = new Set();
     } else {
       document.body.style.overflow = '';
     }
+  }
+);
+
+watch(
+  () => currentImage.value,
+  () => {
+    // Reset the main image loading state when switching images
+    mainLoaded.value = false;
   }
 );
 
@@ -162,6 +174,17 @@ function resetZoom() {
   rotation.value = 0;
 }
 
+function handleMainImageLoad() {
+  mainLoaded.value = true;
+  isTransitioning.value = false;
+}
+
+function markThumbLoaded(index: number) {
+  const next = new Set(loadedThumbs.value);
+  next.add(index);
+  loadedThumbs.value = next;
+}
+
 function handleBackdropClick(e: MouseEvent) {
   if (e.target === e.currentTarget) {
     emit('close');
@@ -242,6 +265,11 @@ function handleBackdropClick(e: MouseEvent) {
 
         <!-- Image Container -->
         <div class="relative w-[85vw] h-[85vh] flex items-center justify-center">
+          <!-- Dark brown loading shimmer overlay for main image -->
+          <div
+            class="absolute inset-0 loading-brown pulse-brown z-10 transition-opacity duration-300 pointer-events-none"
+            :class="{ 'opacity-0': mainLoaded }"
+          ></div>
           <Transition
             :name="isTransitioning ? 'image-fade' : ''"
             mode="out-in"
@@ -257,9 +285,9 @@ function handleBackdropClick(e: MouseEvent) {
               <img
                 :src="currentImage"
                 :alt="`Image ${currentIndex + 1}`"
-                class="w-full h-full object-cover cursor-zoom-in"
+                class="w-full h-full object-cover cursor-zoom-in relative z-20"
                 @click.stop="zoomIn"
-                @load="isTransitioning = false"
+                @load="handleMainImageLoad"
               />
             </div>
           </Transition>
@@ -287,17 +315,23 @@ function handleBackdropClick(e: MouseEvent) {
             @click.stop="goToImage(idx)"
             :disabled="isTransitioning"
             :class="[
-              'w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed',
+              'relative w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed',
               idx === currentIndex
                 ? 'border-white shadow-lg shadow-white/20'
                 : 'border-transparent opacity-70 hover:opacity-100 hover:border-white/50',
             ]"
             :aria-label="`Go to image ${idx + 1}`"
           >
+            <!-- Loading overlay for thumbnails -->
+            <div
+              class="absolute inset-0 loading-brown pulse-brown z-10 transition-opacity duration-300 pointer-events-none"
+              :class="{ 'opacity-0': loadedThumbs.has(idx) }"
+            ></div>
             <img
               :src="img"
               :alt="`Thumbnail ${idx + 1}`"
               class="w-full h-full object-cover"
+              @load="markThumbLoaded(idx)"
             />
           </button>
         </div>

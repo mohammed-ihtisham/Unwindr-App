@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue';
-import { Share2, MapPin, ChevronLeft, ChevronRight, Bookmark } from 'lucide-vue-next';
+import { MapPin, ChevronLeft, ChevronRight, Bookmark } from 'lucide-vue-next';
 import type { Place } from '@/stores/usePlacesStore';
 import { usePlacesStore } from '@/stores/usePlacesStore';
 import MediaGallery from './MediaGallery.vue';
@@ -22,8 +22,10 @@ const showGallery = ref(false);
 const currentImageIndex = ref(0);
 const displaySrc = ref<string | null>(null);
 const chosenFirstLoaded = ref(false);
+const isImageLoading = ref(false);
 const rootEl = ref<HTMLElement | null>(null);
 let io: IntersectionObserver | null = null;
+let slideshowTimer: number | undefined;
 
 // Simple localStorage-based bookmarks for now
 const BOOKMARKS_KEY = 'unwindr:bookmarks';
@@ -99,6 +101,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (io && rootEl.value) io.unobserve(rootEl.value);
   io = null;
+  if (slideshowTimer) {
+    clearInterval(slideshowTimer);
+    slideshowTimer = undefined;
+  }
 });
 
 function openGallery() {
@@ -114,21 +120,30 @@ async function navigateToDetail() {
 function nextImage(e: Event) {
   e.stopPropagation();
   const maxIndex = validImages.value.length - 1;
-  if (currentImageIndex.value < maxIndex) currentImageIndex.value++;
+  if (currentImageIndex.value < maxIndex) switchToIndex(currentImageIndex.value + 1);
 }
 
 function prevImage(e: Event) {
   e.stopPropagation();
-  if (currentImageIndex.value > 0) currentImageIndex.value--;
+  if (currentImageIndex.value > 0) switchToIndex(currentImageIndex.value - 1);
 }
 
-async function handleShare() {
-  
-  if (navigator.share) {
-    navigator.share({
-      title: props.place.name,
-      text: props.place.address,
-    });
+function startSlideshow() {
+  if (slideshowTimer) return;
+  const count = validImages.value.length;
+  if (count <= 1) return;
+  slideshowTimer = window.setInterval(() => {
+    const countNow = validImages.value.length;
+    if (countNow <= 1) return;
+    const next = (currentImageIndex.value + 1) % countNow;
+    switchToIndex(next);
+  }, 1000);
+}
+
+function stopSlideshow() {
+  if (slideshowTimer) {
+    clearInterval(slideshowTimer);
+    slideshowTimer = undefined;
   }
 }
 
@@ -146,6 +161,20 @@ function toggleBookmark(e?: Event) {
   emit('bookmark', props.place.id);
 }
 
+function openDirections(e?: Event) {
+  if (e) e.stopPropagation();
+  const { location, address } = props.place as any;
+  if (location && typeof location.lat === 'number' && typeof location.lng === 'number') {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}`;
+    window.open(url, '_blank');
+    return;
+  }
+  if (address) {
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+    window.open(url, '_blank');
+  }
+}
+
 function handleImgError(e: Event) {
   const imgEl = e.target as HTMLImageElement;
   imgEl.onerror = null as any;
@@ -156,6 +185,7 @@ function handleImgError(e: Event) {
 function handleImgLoad() {
   // Mark that we have a loaded display image
   chosenFirstLoaded.value = true;
+  isImageLoading.value = false;
 }
 
 // Initialize bookmark state on mount and when place id changes
@@ -168,18 +198,31 @@ watch(() => props.place.id, () => {
   isBookmarked.value = ids.has(props.place.id);
 });
 
-// Keep displayed image in sync with the current index
-watch(currentImageIndex, (idx) => {
+// Switch image only after the target image is loaded to avoid blanks
+function switchToIndex(idx: number) {
   const list = validImages.value;
-  if (list[idx]) displaySrc.value = list[idx];
-});
+  const target = list[idx];
+  if (!target) return;
+  currentImageIndex.value = idx;
+  if (displaySrc.value === target) return;
+  isImageLoading.value = true;
+  const img = new Image();
+  img.onload = () => {
+    displaySrc.value = target;
+    isImageLoading.value = false;
+  };
+  img.onerror = () => {
+    isImageLoading.value = false;
+  };
+  img.src = target;
+}
 </script>
 
 <template>
   <div
     :class="[
-      'group relative bg-white border border-earth-gray rounded-xl overflow-hidden transition-all cursor-pointer hover:shadow-xl hover:scale-[1.02]',
-      selected ? 'ring-2 ring-earth-dark shadow-xl border-earth-dark' : '',
+      'group relative bg-white/80 backdrop-blur-xs ring-1 ring-earth-gray/40 rounded-2xl overflow-hidden transition-all cursor-pointer shadow-soft hover:shadow-xl hover:-translate-y-0.5',
+      selected ? 'ring-2 ring-earth-dark shadow-xl' : '',
     ]"
     :data-place-id="place.id"
     ref="rootEl"
@@ -187,9 +230,10 @@ watch(currentImageIndex, (idx) => {
   >
     <!-- Image Carousel -->
     <div
-      class="relative h-64 bg-gray-200 overflow-hidden"
+      class="relative h-52 bg-gray-200 overflow-hidden"
       @click.stop="navigateToDetail"
-      @mouseenter="placesStore.loadPlaceMediaAsync(place.id)"
+      @mouseenter="(placesStore.loadPlaceMediaAsync(place.id), startSlideshow())"
+      @mouseleave="stopSlideshow"
     >
       <img
         v-if="currentImage"
@@ -201,12 +245,13 @@ watch(currentImageIndex, (idx) => {
         @load="handleImgLoad"
         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
       />
+      <!-- Placeholder overlay until an image is loaded or when unavailable -->
       <div
-        v-else
-        class="w-full h-full flex items-center justify-center bg-gradient-to-br from-earth-dark to-earth-dark/80"
-      >
-        <MapPin :size="48" class="text-white opacity-50" />
-      </div>
+        v-if="!currentImage || !chosenFirstLoaded || isImageLoading"
+        class="absolute inset-0 z-20 flex items-center justify-center pointer-events-none rounded-none loading-brown"
+      ></div>
+      <!-- Subtle gradient overlay for better text/icon contrast when image is visible -->
+      <div class="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/30 via-black/5 to-transparent opacity-70"></div>
       
       <!-- Carousel Navigation -->
       <div v-if="validImages.length > 1" class="absolute inset-0 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
@@ -246,7 +291,7 @@ watch(currentImageIndex, (idx) => {
         @click.stop="toggleBookmark"
         :aria-pressed="isBookmarked"
         :title="isBookmarked ? 'Remove bookmark' : 'Save to bookmarks'"
-        class="absolute top-3 right-3 p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-all backdrop-blur-sm"
+        class="absolute top-3 right-3 z-30 p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-all backdrop-blur-sm"
       >
         <Bookmark :size="18" :class="[isBookmarked ? 'text-earth-khaki fill-earth-khaki' : 'text-earth-khaki']" />
       </button>
@@ -258,10 +303,12 @@ watch(currentImageIndex, (idx) => {
       >
         Hidden Gem
       </div>
+
+      
     </div>
 
     <!-- Content -->
-    <div class="p-4">
+    <div class="p-3">
       <!-- Price/Title -->
       <div class="mb-2">
         <h3 class="text-xl font-semibold text-earth-dark mb-1">{{ place.name }}</h3>

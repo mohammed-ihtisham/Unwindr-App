@@ -120,8 +120,8 @@ function updateMarkers() {
     let marker = markerRefs.get(markerData.id);
 
     if (!marker) {
-      // Create custom icon with image preview, but only apply image after it loads
-      const baseHtml = `<div class=\"marker-preview\" style=\"width: 40px; height: 40px; border: 2px solid white; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); background: #3b82f6; background-size: cover; background-position: center;\"></div>`;
+      // Create custom icon with image preview; dark-brown loading shimmer
+      const baseHtml = `<div class=\"marker-preview loading-brown\" style=\"width: 40px; height: 40px; border: 2px solid white; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); background-size: cover; background-position: center;\"></div>`;
 
       const icon = L.divIcon({
         html: baseHtml,
@@ -158,6 +158,7 @@ function updateMarkers() {
           img.onload = () => {
             if (!imageSet && el) {
               el.style.backgroundImage = `url('${url}')`;
+              el.classList.remove('loading-brown');
               imageSet = true;
             }
           };
@@ -187,6 +188,7 @@ function updateMarkers() {
           img.onload = () => {
             if (!imageSet && el) {
               el.style.backgroundImage = `url('${url}')`;
+              el.classList.remove('loading-brown');
               imageSet = true;
             }
           };

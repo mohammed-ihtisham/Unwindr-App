@@ -115,22 +115,33 @@ defineExpose({
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex-1 flex items-center justify-center p-6">
-      <div class="text-center text-earth-dark/70">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-earth-dark mx-auto mb-4"></div>
+    <!-- Loading State (skeleton grid) -->
+    <div v-if="isLoading" class="flex-1 p-4">
+      <div class="mb-4 text-center">
         <p class="text-lg font-medium mb-1 text-earth-dark">Loading places...</p>
-        <p class="text-sm mb-4">Fetching all places with images from the database</p>
-        
-        <!-- Progress Bar -->
+        <p class="text-sm mb-3 text-earth-dark/70">Fetching places and preview images</p>
         <div v-if="loadingProgress !== undefined" class="w-full max-w-xs mx-auto">
-          <div class="bg-earth-gray rounded-full h-2 mb-2">
+          <div class="bg-earth-gray rounded-full h-2 mb-2 overflow-hidden">
             <div 
               class="bg-earth-dark h-2 rounded-full transition-all duration-300 ease-out"
               :style="{ width: `${loadingProgress}%` }"
             ></div>
           </div>
           <p class="text-sm text-earth-dark/70">{{ Math.round(loadingProgress || 0) }}% complete</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div v-for="n in 6" :key="n" class="rounded-2xl ring-1 ring-earth-gray/40 bg-white/70 backdrop-blur-xs overflow-hidden shadow-soft animate-pulse">
+          <div class="h-64 bg-earth-gray/70"></div>
+          <div class="p-4 space-y-2">
+            <div class="h-5 bg-earth-gray/70 rounded w-3/4"></div>
+            <div class="h-4 bg-earth-gray/60 rounded w-5/6"></div>
+            <div class="flex gap-2 pt-1">
+              <div class="h-5 w-16 bg-earth-gray/60 rounded-full"></div>
+              <div class="h-5 w-12 bg-earth-gray/60 rounded-full"></div>
+              <div class="h-5 w-10 bg-earth-gray/50 rounded-full"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
