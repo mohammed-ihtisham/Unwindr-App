@@ -45,16 +45,15 @@ src/
 ├── views/               # Page components
 │   └── LandingView.vue
 ├── stores/              # Pinia stores
-│   ├── useAuthStore.ts  # Authentication state
+│   ├── useAuthStore.ts   # Authentication state
 │   └── usePlacesStore.ts # Places data & filtering
 ├── lib/                 # Utility functions & API
 │   ├── api/             # Backend API integration
-│   │   ├── client.ts    # HTTP client
+│   │   ├── client.ts    # HTTP client (axios)
 │   │   ├── config.ts    # API configuration
 │   │   ├── types.ts     # TypeScript types
 │   │   ├── services/    # API service modules
 │   │   │   ├── interestFilter.ts
-│   │   │   ├── mediaAnalytics.ts
 │   │   │   ├── mediaLibrary.ts
 │   │   │   ├── placeCatalog.ts
 │   │   │   ├── qualityRanking.ts
@@ -82,9 +81,6 @@ src/
 # Install dependencies
 npm install
 
-# Create environment file
-echo "VITE_API_BASE_URL=http://localhost:8000" > .env
-
 # Start development server
 npm run dev
 
@@ -95,8 +91,6 @@ npm run build
 npm run preview
 ```
 
-**Note**: Make sure your backend API is running at `http://localhost:8000` or update the `.env` file accordingly.
-
 ## Development
 
 ### Running the App
@@ -105,24 +99,35 @@ npm run preview
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`
+The app will be available at `http://localhost:5174`
 
-### Type Checking
+### Environment configuration
+
+This project supports two ways to reach the backend API:
+
+- **Development (default)**: Vite proxy forwards `/api` to `http://localhost:8000` (see `vite.config.ts`). No env variables needed.
+- **Production or custom dev URL**: Set `VITE_API_BASE_URL` to your API origin (e.g. `https://api.example.com`).
+
+Create a `.env` or `.env.local` if you need to override the default:
 
 ```bash
-npm run type-check
+echo "VITE_API_BASE_URL=https://api.example.com" > .env.local
 ```
 
-### Linting
+Notes:
+- When `VITE_API_BASE_URL` is unset, the app uses the Vite proxy (`/api → http://localhost:8000`).
+- When `VITE_API_BASE_URL` is set, requests go directly to that origin and the proxy is not used.
+
+### Scripts
 
 ```bash
-npm run lint
-```
-
-### Formatting
-
-```bash
-npm run format
+npm run dev         # Start dev server (Vite)
+npm run build       # Type-check then build for production
+npm run preview     # Preview the production build
+npm run type-check  # Vue TypeScript type checking
+npm run lint        # ESLint (Vue/TS) with --fix
+npm run format      # Prettier on src/
+npm run test:unit   # Vitest unit tests
 ```
 
 ## Usage
@@ -152,7 +157,7 @@ In Media Gallery:
 
 ## State Management
 
-The app uses Pinia for centralized state management:
+Pinia stores centralize state:
 
 ### Auth Store (`useAuthStore`)
 - User authentication state (login/logout/register)
@@ -172,8 +177,6 @@ The app uses Pinia for centralized state management:
 - Pagination state
 - Loading and error states
 
-All filtering and pagination logic is handled through computed getters for optimal reactivity.
-
 ## Data Flow
 
 1. User interactions emit events from child components
@@ -189,18 +192,19 @@ The app is fully integrated with the backend API. It supports:
 ### Concepts Integrated
 - **UserAuth** - User authentication and authorization
 - **PlaceCatalog** - Place discovery and management
-- **InterestFilter** - AI-powered interest filtering
+- **InterestFilter** - Preference tagging and matching
 - **MediaLibrary** - Media storage and retrieval
-- **QualityRanking** - Place quality metrics
-- **MediaAnalytics** - Engagement tracking
-
+- **QualityRanking** - Place quality metrics and recommendations
 
 ### API Documentation
 
-For complete API integration details, see:
-- `INTEGRATION_GUIDE.md` - Comprehensive integration documentation
-- `QUICK_REFERENCE.md` - Quick API reference
-- `api-spec.md` - Backend API specification
+- See `api-spec.md` for the backend API specification implemented by this app.
+
+## Troubleshooting
+
+- Backend not running: API requests will fail; start your server on `http://localhost:8000` or set `VITE_API_BASE_URL`.
+- CORS issues in production: ensure your API allows the app's origin and that `withCredentials` settings match server config.
+- Auth 401s clear the session token automatically; sign in again to refresh your session.
 
 ## Future Enhancements
 
