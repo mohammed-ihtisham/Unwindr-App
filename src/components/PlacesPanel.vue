@@ -43,7 +43,7 @@ function scrollToPlaceCard(placeId: string) {
     const cardElement = selectedCard as HTMLElement;
     cardElement.style.transition = 'all 0.3s ease';
     cardElement.style.transform = 'scale(1.02)';
-    cardElement.style.boxShadow = '0 8px 25px rgba(59, 130, 246, 0.3)';
+    cardElement.style.boxShadow = '0 8px 25px rgba(75, 46, 23, 0.35)';
     
     // Remove highlight after a moment
     setTimeout(() => {

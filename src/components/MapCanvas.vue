@@ -214,7 +214,7 @@ function updateMarkerStyles() {
         const preview = element.querySelector('.marker-preview') as HTMLElement;
         if (preview) {
           if (isSelected) {
-            preview.style.borderColor = '#ef4444';
+            preview.style.borderColor = '#4B2E17';
             preview.style.borderWidth = '3px';
             preview.style.transform = 'scale(1.2)';
           } else {

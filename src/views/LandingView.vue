@@ -37,6 +37,7 @@ const {
   initialPlacesLoaded,
   backgroundLoading,
   hasActiveFilters,
+  viewportFilteredPlaces,
 } = storeToRefs(placesStore);
 
 // Auth modal state - only show when user clicks login
@@ -44,6 +45,7 @@ const showAuthModal = ref(false);
 
 // Map component reference
 const mapCanvasRef = ref<InstanceType<typeof MapCanvas> | null>(null);
+const placesPanelRef = ref<InstanceType<typeof PlacesPanel> | null>(null);
 // Control whether the detail modal should auto-open the gallery
 const autoOpenGalleryFromMap = ref(false);
 
@@ -96,9 +98,9 @@ watch(
   }
 );
 
-// Map markers from filtered places (only show places that match active filters)
+// Map markers reflect what's visible in the viewport (keeps panel and map in sync)
 const mapMarkers = computed(() => {
-  return filteredPlaces.value.map((place) => ({
+  return viewportFilteredPlaces.value.map((place) => ({
     id: place.id,
     lat: place.location.lat,
     lng: place.location.lng,
@@ -109,10 +111,12 @@ const mapMarkers = computed(() => {
 });
 
 function handleMarkerClick(id: string) {
-  // Select place and open modal with gallery auto-open
+  // Select place and scroll to its card in the panel
   placesStore.selectPlace(id);
-  autoOpenGalleryFromMap.value = true;
-  placesStore.openModal(id);
+  autoOpenGalleryFromMap.value = false;
+  nextTick(() => {
+    placesPanelRef.value?.scrollToPlaceCard(id);
+  });
 }
 
 function handlePlaceSelect(id: string) {
@@ -289,7 +293,7 @@ function clearAllFilters() {
       <div class="w-full lg:w-[600px] xl:w-[700px] border-l border-earth-gray/40 bg-white/80 backdrop-blur-xs">
         <PlacesPanel
           ref="placesPanelRef"
-          :places="allPlaces"
+          :places="viewportFilteredPlaces"
           :selected-id="selectedPlaceId"
           :is-loading="isLoading"
           :has-more-places="hasMorePlaces"

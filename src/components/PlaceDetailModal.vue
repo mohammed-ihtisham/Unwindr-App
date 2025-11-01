@@ -258,11 +258,11 @@
 
                   <!-- Action Buttons -->
                   <div class="flex flex-col sm:flex-row gap-3">
-                    <button class="flex-1 bg-earth-dark text-white py-3 px-6 rounded-xl font-medium hover:bg-earth-dark/90 transition-all shadow-md hover:shadow-lg hover:scale-[1.02]">
+                    <button @click="openDirections" class="flex-1 bg-earth-dark text-white py-3 px-6 rounded-xl font-medium hover:bg-earth-dark/90 transition-all shadow-md hover:shadow-lg hover:scale-[1.02]">
                       Get directions
                     </button>
                     <button
-                      @click="shareOnGoogleMaps"
+                      @click="sharePlace"
                       class="flex-1 border border-earth-gray text-earth-dark py-3 px-6 rounded-xl font-medium hover:bg-earth-cream transition-all"
                     >
                       Share this place
@@ -398,13 +398,63 @@ function toggleBookmark() {
   saveBookmarks(ids);
 }
 
-function shareOnGoogleMaps() {
+function isIOS(): boolean {
+  const ua = navigator.userAgent;
+  return /iPad|iPhone|iPod/.test(ua) || (/(Mac)/.test(ua) && 'ontouchend' in document);
+}
+
+function buildDirectionsUrl(lat?: number, lng?: number, address?: string): string | null {
+  if (typeof lat === 'number' && typeof lng === 'number') {
+    if (isIOS()) {
+      return `maps://?daddr=${lat},${lng}`;
+    }
+    return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  }
+  if (address) {
+    const encoded = encodeURIComponent(address);
+    if (isIOS()) {
+      return `maps://?daddr=${encoded}`;
+    }
+    return `https://www.google.com/maps/dir/?api=1&destination=${encoded}`;
+  }
+  return null;
+}
+
+function openDirections() {
   if (!place.value) return;
+  const { location, address } = place.value as any;
+  const url = buildDirectionsUrl(location?.lat, location?.lng, address);
+  if (url) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+}
+
+function buildShareUrl(): string | null {
+  if (!place.value) return null;
   const name = place.value.name || '';
   const address = place.value.address || '';
   const query = encodeURIComponent([name, address].filter(Boolean).join(' '));
-  const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
-  window.open(url, '_blank', 'noopener,noreferrer');
+  return `https://www.google.com/maps/search/?api=1&query=${query}`;
+}
+
+async function sharePlace() {
+  const url = buildShareUrl();
+  if (!place.value || !url) return;
+  const title = place.value.name || 'Place';
+  const text = `Check out ${title}`;
+  try {
+    if (navigator.share) {
+      await navigator.share({ title, text, url });
+      return;
+    }
+  } catch {
+    // Fall through to clipboard
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+  } catch {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
 }
 
 // Share functionality removed per product direction

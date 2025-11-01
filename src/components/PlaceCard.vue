@@ -117,6 +117,11 @@ async function navigateToDetail() {
   placesStore.openModal(props.place.id);
 }
 
+function handleCardClick() {
+  emit('select', props.place.id);
+  navigateToDetail();
+}
+
 function nextImage(e: Event) {
   e.stopPropagation();
   const maxIndex = validImages.value.length - 1;
@@ -222,16 +227,16 @@ function switchToIndex(idx: number) {
   <div
     :class="[
       'group relative bg-white/80 backdrop-blur-xs ring-1 ring-earth-gray/40 rounded-2xl overflow-hidden transition-all cursor-pointer shadow-soft hover:shadow-xl hover:-translate-y-0.5',
-      selected ? 'ring-2 ring-earth-dark shadow-xl' : '',
+      selected ? 'ring-2 ring-[#4B2E17] shadow-xl bg-[#4B2E17]/10' : '',
     ]"
     :data-place-id="place.id"
     ref="rootEl"
-    @click="navigateToDetail"
+    @click="handleCardClick"
   >
     <!-- Image Carousel -->
     <div
       class="relative h-52 bg-gray-200 overflow-hidden"
-      @click.stop="navigateToDetail"
+      @click.stop="handleCardClick"
       @mouseenter="(placesStore.loadPlaceMediaAsync(place.id), startSlideshow())"
       @mouseleave="stopSlideshow"
     >
