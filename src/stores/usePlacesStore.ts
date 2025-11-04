@@ -202,16 +202,14 @@ export const usePlacesStore = defineStore('places', {
         return items;
       }
       
-      // Filter places that are within the current viewport bounds
-      // Add a small buffer to make bounds more inclusive
-      const buffer = 0.01; // ~1km buffer
+      // Filter places that are within the current viewport bounds (no buffer)
       const expandedBounds = {
-        north: this.viewportBounds.north + buffer,
-        south: this.viewportBounds.south - buffer,
-        east: this.viewportBounds.east + buffer,
-        west: this.viewportBounds.west - buffer,
+        north: this.viewportBounds.north,
+        south: this.viewportBounds.south,
+        east: this.viewportBounds.east,
+        west: this.viewportBounds.west,
       };
-      
+
       return items.filter((place) => {
         const lat = place.location.lat;
         const lng = place.location.lng;

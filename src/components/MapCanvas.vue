@@ -27,8 +27,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'markerClick', id: string): void;
-  (e: 'viewportChange', bounds: ViewportBounds): void;
+  (e: 'marker-click', id: string): void;
+  (e: 'viewport-change', bounds: ViewportBounds): void;
 }>();
 
 const mapContainer = ref<HTMLDivElement | null>(null);
@@ -134,7 +134,7 @@ function updateMarkers() {
         .addTo(map!)
         .on('click', () => {
           isUserInteracting.value = true;
-          emit('markerClick', markerData.id);
+          emit('marker-click', markerData.id);
         });
 
       markerRefs.set(markerData.id, marker);
@@ -239,7 +239,7 @@ function emitViewportBounds() {
     west: bounds.getWest(),
   };
   
-  emit('viewportChange', viewportBounds);
+  emit('viewport-change', viewportBounds);
 }
 
 function fitToMarkers() {
