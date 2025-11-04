@@ -295,7 +295,7 @@
     <!-- Full Photo Gallery Modal -->
     <MediaGallery
       v-if="showFullGallery"
-      :images="place?.images || []"
+      :images="sortedImages"
       :open="showFullGallery"
       @close="showFullGallery = false"
     />
@@ -331,10 +331,10 @@ const overlayHidden = ref<Set<string>>(new Set());
 
 const sortedImages = computed(() => {
   const imgs = (place.value?.images || []).filter((u) => !!u);
-  const loaded: string[] = [];
-  const pending: string[] = [];
-  imgs.forEach((u) => (loadedSet.value.has(u) ? loaded.push(u) : pending.push(u)));
-  return [...loaded, ...pending];
+  // Preserve true load order first (insertion order of Set), then pending in original order
+  const loadedInOrder = Array.from(loadedSet.value).filter((u) => imgs.includes(u));
+  const pending = imgs.filter((u) => !loadedSet.value.has(u));
+  return [...loadedInOrder, ...pending];
 });
 
 function handleImageLoad(url?: string) {

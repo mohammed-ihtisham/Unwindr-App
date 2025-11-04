@@ -23,9 +23,12 @@ const currentImageIndex = ref(0);
 const displaySrc = ref<string | null>(null);
 const chosenFirstLoaded = ref(false);
 const isImageLoading = ref(false);
+const loadedSet = ref<Set<string>>(new Set());
+const failedSet = ref<Set<string>>(new Set());
 const rootEl = ref<HTMLElement | null>(null);
 let io: IntersectionObserver | null = null;
 let slideshowTimer: number | undefined;
+const prefetchedAll = ref(false);
 
 // Simple localStorage-based bookmarks for now
 const BOOKMARKS_KEY = 'unwindr:bookmarks';
@@ -55,8 +58,15 @@ const formattedDistance = computed(() => {
   return null;
 });
 
-const validImages = computed(() => props.place.images.filter((u) => !!u));
+const orderedImages = computed(() => {
+  const imgs = props.place.images.filter((u) => !!u);
+  const loaded = Array.from(loadedSet.value).filter((u) => imgs.includes(u));
+  const pending = imgs.filter((u) => !loadedSet.value.has(u));
+  return [...loaded, ...pending];
+});
+const validImages = computed(() => orderedImages.value);
 const currentImage = computed(() => displaySrc.value || null);
+const isDisplayLoaded = computed(() => !!displaySrc.value && loadedSet.value.has(displaySrc.value));
 
 function preloadFirstLoaded() {
   const valid = validImages.value;
@@ -70,6 +80,9 @@ function preloadFirstLoaded() {
   valid.slice(0, 5).forEach((url) => {
     const img = new Image();
     img.onload = () => {
+      const next = new Set(loadedSet.value);
+      next.add(url);
+      loadedSet.value = next;
       if (!chosenFirstLoaded.value) {
         displaySrc.value = url;
         chosenFirstLoaded.value = true;
@@ -83,14 +96,27 @@ function preloadFirstLoaded() {
 }
 
 onMounted(preloadFirstLoaded);
-watch(() => props.place.images, preloadFirstLoaded, { deep: true });
+watch(() => props.place.images, () => {
+  loadedSet.value = new Set();
+  preloadFirstLoaded();
+}, { deep: true });
+// If any image loads and we haven't successfully shown one yet, switch to the first loaded
+watch(loadedSet, () => {
+  if (!isDisplayLoaded.value) {
+    const firstLoaded = orderedImages.value.find((u) => loadedSet.value.has(u) && !failedSet.value.has(u));
+    if (firstLoaded) {
+      displaySrc.value = firstLoaded;
+    }
+  }
+});
 
 onMounted(() => {
   // Lazy fetch full media for cards that are actually visible
   io = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
-        placesStore.loadPlaceMediaAsync(props.place.id);
+        // Begin aggressive prefetch when card is in or near view
+        prefetchAllImages();
         io && io.unobserve(entry.target);
       }
     });
@@ -183,14 +209,59 @@ function openDirections(e?: Event) {
 function handleImgError(e: Event) {
   const imgEl = e.target as HTMLImageElement;
   imgEl.onerror = null as any;
-  // Hide the broken image so the fallback shows
-  imgEl.style.display = 'none';
+  // Record failed URL and try another
+  if (imgEl.src) {
+    const url = imgEl.src;
+    const next = new Set(failedSet.value);
+    next.add(url);
+    failedSet.value = next;
+  }
+  const replacement = orderedImages.value.find((u) => !failedSet.value.has(u));
+  if (replacement && replacement !== displaySrc.value) {
+    displaySrc.value = replacement;
+  }
 }
 
 function handleImgLoad() {
   // Mark that we have a loaded display image
   chosenFirstLoaded.value = true;
   isImageLoading.value = false;
+  if (displaySrc.value) {
+    const next = new Set(loadedSet.value);
+    next.add(displaySrc.value);
+    loadedSet.value = next;
+  }
+}
+
+async function prefetchAllImages() {
+  if (prefetchedAll.value) return;
+  prefetchedAll.value = true;
+  try {
+    // Ensure we have all URLs, not just the preview
+    await placesStore.loadPlaceMedia(props.place.id);
+  } catch (_) {
+    // ignore
+  }
+  const urls = props.place.images.filter((u) => !!u);
+  urls.forEach((url) => {
+    const img = new Image();
+    img.onload = () => {
+      const next = new Set(loadedSet.value);
+      next.add(url);
+      loadedSet.value = next;
+    };
+    img.onerror = () => {
+      const next = new Set(failedSet.value);
+      next.add(url);
+      failedSet.value = next;
+    };
+    img.src = url;
+  });
+}
+
+function handleHoverStart() {
+  prefetchAllImages();
+  startSlideshow();
 }
 
 // Initialize bookmark state on mount and when place id changes
@@ -231,13 +302,14 @@ function switchToIndex(idx: number) {
     ]"
     :data-place-id="place.id"
     ref="rootEl"
+    @mouseenter="handleHoverStart"
     @click="handleCardClick"
   >
     <!-- Image Carousel -->
     <div
       class="relative h-52 bg-gray-200 overflow-hidden"
       @click.stop="handleCardClick"
-      @mouseenter="(placesStore.loadPlaceMediaAsync(place.id), startSlideshow())"
+      @mouseenter="handleHoverStart"
       @mouseleave="stopSlideshow"
     >
       <img
@@ -252,7 +324,7 @@ function switchToIndex(idx: number) {
       />
       <!-- Placeholder overlay until an image is loaded or when unavailable -->
       <div
-        v-if="!currentImage || !chosenFirstLoaded || isImageLoading"
+        v-if="!currentImage || !isDisplayLoaded || isImageLoading"
         class="absolute inset-0 z-20 flex items-center justify-center pointer-events-none rounded-none loading-brown"
       ></div>
       <!-- Subtle gradient overlay for better text/icon contrast when image is visible -->
@@ -358,7 +430,7 @@ function switchToIndex(idx: number) {
     <!-- Gallery Modal -->
     <MediaGallery
       v-if="showGallery"
-      :images="place.images"
+      :images="orderedImages"
       :open="showGallery"
       @close="showGallery = false"
     />
