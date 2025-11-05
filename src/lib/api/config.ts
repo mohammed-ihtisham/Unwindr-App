@@ -14,7 +14,7 @@ export const API_CONFIG = {
 export const API_ENDPOINTS = {
   // UserAuth
   userAuth: {
-    registerUser: '/UserAuth/registerUser',
+    registerUser: '/api/UserAuth/registerUser',
     login: '/api/UserAuth/login',
     logout: '/api/UserAuth/logout',
     getAuthenticatedUser: '/api/UserAuth/getAuthenticatedUser',
