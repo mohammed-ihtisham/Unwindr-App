@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { Sparkles, Plus, X, Wand2, Tag, ChevronDown } from 'lucide-vue-next';
 import { interestFilterService } from '@/lib/api/services/interestFilter';
+import { apiClient } from '@/lib/api/client';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useInterests } from '@/composables/useInterests';
 
@@ -94,6 +95,13 @@ async function generateTags() {
     return;
   }
   
+  // Get session token for authentication
+  const sessionToken = apiClient.getSessionToken();
+  if (!sessionToken) {
+    apiError.value = 'Please log in to use AI tag generation';
+    return;
+  }
+  
   isGenerating.value = true;
   apiError.value = null;
   
@@ -101,37 +109,45 @@ async function generateTags() {
     // Clear existing tags when generating new ones
     emit('update:selectedTags', []);
     
-    // Call the real API
+    // Call the real API with sessionToken
     const response = await interestFilterService.inferPreferencesFromText({
-      userId: authStore.user.userId,
+      sessionToken,
       text: descriptionInput.value,
       // Optional: add location hint if available
       // locationHint: 'Boston, MA'
     });
     
+    // Defensive check: ensure response has tags and no error
+    if (response.error) {
+      apiError.value = response.error;
+      return;
+    }
+    
     // Use the tags directly from the API response
     const generatedTags = response.tags;
     
-    // Add all generated tags
-    if (generatedTags.length > 0) {
-      emit('update:selectedTags', generatedTags);
-      
-      // Auto-apply tags and trigger search
-      emit('tagsGenerated', generatedTags);
-      
-      // Briefly show generated tags in the modal, then close
-      setTimeout(() => {
-        showModal.value = false;
-        descriptionInput.value = '';
-        showManualMode.value = false;
-        apiError.value = null;
-      }, 600);
-    } else {
+    // Check if tags exist and have length
+    if (!generatedTags || generatedTags.length === 0) {
       apiError.value = 'No relevant tags found for your description. Try being more specific or use manual selection.';
+      return;
     }
     
+    // Add all generated tags
+    emit('update:selectedTags', generatedTags);
+    
+    // Auto-apply tags and trigger search
+    emit('tagsGenerated', generatedTags);
+    
+    // Briefly show generated tags in the modal, then close
+    setTimeout(() => {
+      showModal.value = false;
+      descriptionInput.value = '';
+      showManualMode.value = false;
+      apiError.value = null;
+    }, 600);
+    
   } catch (error: any) {
-    apiError.value = error.response?.data?.error || error.message || 'Failed to generate tags';
+    apiError.value = error.message || error.response?.data?.error || 'Failed to generate tags';
   } finally {
     isGenerating.value = false;
   }

@@ -38,10 +38,17 @@ export const interestFilterService = {
   async inferPreferencesFromText(
     data: InferPreferencesFromTextRequest
   ): Promise<InferPreferencesFromTextResponse> {
-    return apiClient.post<InferPreferencesFromTextResponse>(
+    const response = await apiClient.post<InferPreferencesFromTextResponse>(
       API_ENDPOINTS.interestFilter.inferPreferencesFromText,
       data
     );
+    
+    // Check if the response contains an error
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    
+    return response;
   },
 
   /**

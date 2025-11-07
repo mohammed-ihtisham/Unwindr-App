@@ -322,19 +322,20 @@ export interface SetInterestPreferencesRequest {
 export interface SetInterestPreferencesResponse {}
 
 export interface InferPreferencesFromTextRequest {
-  userId: ID;
+  sessionToken: string;
   text: string;
   radius?: number;
   locationHint?: string;
 }
 
 export interface InferPreferencesFromTextResponse {
-  tags: string[];
-  exclusions: string[];
-  confidence: number;
-  rationale: string;
-  warnings: string[];
+  tags?: string[];
+  exclusions?: string[];
+  confidence?: number;
+  rationale?: string;
+  warnings?: string[];
   needsConfirmation?: boolean;
+  error?: string;
 }
 
 export interface TagPlaceRequest {
