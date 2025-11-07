@@ -46,5 +46,6 @@ export const API_ENDPOINTS = {
     tagPlace: "/api/InterestFilter/tagPlace",
     clearPreferences: "/api/InterestFilter/clearPreferences",
     getMatchingPlaces: "/api/InterestFilter/getMatchingPlaces",
+    getAvailableTags: "/api/InterestFilter/getAvailableTags",
   },
 } as const;
