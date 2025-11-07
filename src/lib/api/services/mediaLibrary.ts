@@ -8,10 +8,6 @@ import { API_ENDPOINTS } from '../config';
 import type {
   SeedMediaRequest,
   SeedMediaResponse,
-  AddMediaRequest,
-  AddMediaResponse,
-  DeleteMediaRequest,
-  DeleteMediaResponse,
   GetMediaByPlaceRequest,
   GetMediaByPlaceResponse,
   GetMediaItemsByPlaceRequest,
@@ -30,23 +26,6 @@ export const mediaLibraryService = {
     return apiClient.post<SeedMediaResponse>(API_ENDPOINTS.mediaLibrary.seedMedia, {
       placeId,
       urls,
-    });
-  },
-
-  /**
-   * Add a user-contributed media item
-   */
-  async addMedia(data: AddMediaRequest): Promise<AddMediaResponse> {
-    return apiClient.post<AddMediaResponse>(API_ENDPOINTS.mediaLibrary.addMedia, data);
-  },
-
-  /**
-   * Delete a media item
-   */
-  async deleteMedia(userId: ID, mediaId: ID): Promise<DeleteMediaResponse> {
-    return apiClient.post<DeleteMediaResponse>(API_ENDPOINTS.mediaLibrary.deleteMedia, {
-      userId,
-      mediaId,
     });
   },
 

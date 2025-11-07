@@ -105,24 +105,6 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /**
-     * Change password
-     */
-    async changePassword(oldPassword: string, newPassword: string): Promise<boolean> {
-      this.isLoading = true;
-      this.error = null;
-
-      try {
-        await userAuthService.changePassword(oldPassword, newPassword);
-        return true;
-      } catch (error: any) {
-        console.error('Change password error:', error);
-        this.error = error.message || 'Password change failed';
-        return false;
-      } finally {
-        this.isLoading = false;
-      }
-    },
 
     /**
      * Initialize auth state (call on app mount)

@@ -14,16 +14,6 @@ import type {
   LogoutResponse,
   GetAuthenticatedUserRequest,
   GetAuthenticatedUserResponse,
-  ChangePasswordRequest,
-  ChangePasswordResponse,
-  GrantModeratorRequest,
-  GrantModeratorResponse,
-  RevokeModeratorRequest,
-  RevokeModeratorResponse,
-  GetUserDetailsRequest,
-  GetUserDetailsResponse,
-  IsModeratorRequest,
-  IsModeratorResponse,
 } from '../types';
 
 export const userAuthService = {
@@ -98,76 +88,6 @@ export const userAuthService = {
     }
     
     return response;
-  },
-
-  /**
-   * Change password for authenticated user
-   */
-  async changePassword(
-    oldPassword: string,
-    newPassword: string
-  ): Promise<ChangePasswordResponse> {
-    const sessionToken = apiClient.getSessionToken();
-    if (!sessionToken) {
-      throw new Error('No active session');
-    }
-    return apiClient.post<ChangePasswordResponse>(API_ENDPOINTS.userAuth.changePassword, {
-      sessionToken,
-      oldPassword,
-      newPassword,
-    });
-  },
-
-  /**
-   * Grant moderator privileges to a user
-   */
-  async grantModerator(targetUserId: string): Promise<GrantModeratorResponse> {
-    const adminSessionToken = apiClient.getSessionToken();
-    if (!adminSessionToken) {
-      throw new Error('No active session');
-    }
-    return apiClient.post<GrantModeratorResponse>(API_ENDPOINTS.userAuth.grantModerator, {
-      targetUserId,
-      adminSessionToken,
-    });
-  },
-
-  /**
-   * Revoke moderator privileges from a user
-   */
-  async revokeModerator(targetUserId: string): Promise<RevokeModeratorResponse> {
-    const adminSessionToken = apiClient.getSessionToken();
-    if (!adminSessionToken) {
-      throw new Error('No active session');
-    }
-    return apiClient.post<RevokeModeratorResponse>(API_ENDPOINTS.userAuth.revokeModerator, {
-      targetUserId,
-      adminSessionToken,
-    });
-  },
-
-  /**
-   * Get user details by ID
-   */
-  async getUserDetails(userId: string): Promise<GetUserDetailsResponse> {
-    const response = await apiClient.post<GetUserDetailsResponse[]>(
-      API_ENDPOINTS.userAuth.getUserDetails,
-      { userId }
-    );
-    // Query endpoints return arrays, take first result
-    return response[0];
-  },
-
-  /**
-   * Check if user is a moderator
-   */
-  async isModerator(userId: string): Promise<IsModeratorResponse> {
-    const response = await apiClient.post<IsModeratorResponse[]>(
-      API_ENDPOINTS.userAuth.isModerator,
-      { userId }
-    );
-    // Query endpoints return arrays, take first result
-    return response[0];
   },
 };
 

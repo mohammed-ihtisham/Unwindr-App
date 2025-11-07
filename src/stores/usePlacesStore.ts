@@ -355,14 +355,20 @@ export const usePlacesStore = defineStore('places', {
         // Get place IDs from MongoDB
         this.loadingProgress = 10;
         
+        // Convert radius to bounding box for getPlacesInViewport
+        // Approximate: 1 degree latitude ≈ 111 km, longitude varies by latitude
         const radiusKm = 100; // Large radius to get plenty of places
-        let placeIds: string[] = [];
+        const latDelta = radiusKm / 111; // Approximate degrees for latitude
+        const lngDelta = radiusKm / (111 * Math.cos(this.userLocation.lat * Math.PI / 180)); // Adjust for longitude
+        
+        let places: ViewportPlace[] = [];
         
         try {
-          placeIds = await placeCatalogService.getPlacesInArea({
-            centerLat: this.userLocation.lat,
-            centerLng: this.userLocation.lng,
-            radius: radiusKm,
+          places = await placeCatalogService.getPlacesInViewport({
+            southLat: this.userLocation.lat - latDelta,
+            westLng: this.userLocation.lng - lngDelta,
+            northLat: this.userLocation.lat + latDelta,
+            eastLng: this.userLocation.lng + lngDelta,
           });
         } catch (apiError: any) {
           if (apiError.response?.data?.error?.includes('unexpected end of file')) {
@@ -373,6 +379,8 @@ export const usePlacesStore = defineStore('places', {
             return;
           }
         }
+        
+        const placeIds = places.map(p => p.id);
         
         if (placeIds.length === 0) {
           this.error = 'No places found in the area. Please try a different location.';
