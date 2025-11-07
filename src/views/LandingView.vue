@@ -57,7 +57,7 @@ watch(() => authStore.isAuthenticated, async (isAuthenticated) => {
   } else {
     // Clear bookmarks and disable saved places filter when user logs out
     placesStore.bookmarkedPlaceIds = new Set<string>();
-    placesStore.setSavedPlaces(false);
+    await placesStore.setSavedPlaces(false);
   }
 });
 
@@ -103,9 +103,12 @@ watch(
   }
 );
 
-// Map markers reflect what's visible in the viewport (keeps panel and map in sync)
+// Map markers reflect what's shown in the panel
+// When "Saved Places" filter is active, show all bookmarked places (not just viewport)
+// Otherwise, show viewport-filtered places
 const mapMarkers = computed(() => {
-  return viewportFilteredPlaces.value.map((place) => ({
+  const placesToShow = allPlaces.value; // This already handles saved places vs viewport logic
+  return placesToShow.map((place) => ({
     id: place.id,
     lat: place.location.lat,
     lng: place.location.lng,
@@ -161,10 +164,10 @@ async function handleViewportChange(bounds: ViewportBounds) {
   await placesStore.loadPlacesInViewport(bounds, true);
 }
 
-function clearAllFilters() {
+async function clearAllFilters() {
   placesStore.setQuery('');
   placesStore.setDistance(null);
-  placesStore.setSavedPlaces(false);
+  await placesStore.setSavedPlaces(false);
   // Reset selected interests directly on the store for now
   placesStore.selectedInterests = [];
 }
@@ -238,7 +241,7 @@ function clearAllFilters() {
                 <span class="text-sm text-earth-dark font-medium">Saved Places</span>
                 <ToggleSwitch
                   :model-value="showSavedPlaces"
-                  @update:model-value="placesStore.setSavedPlaces"
+                  @update:model-value="(val) => placesStore.setSavedPlaces(val)"
                   label="Toggle saved places"
                 />
               </div>
@@ -299,7 +302,7 @@ function clearAllFilters() {
       <div class="w-full lg:w-[600px] xl:w-[700px] border-l border-earth-gray/40 bg-white/80 backdrop-blur-xs">
         <PlacesPanel
           ref="placesPanelRef"
-          :places="viewportFilteredPlaces"
+          :places="allPlaces"
           :selected-id="selectedPlaceId"
           :is-loading="isLoading"
           :has-more-places="hasMorePlaces"

@@ -17,11 +17,11 @@ export function useInterests() {
    */
   const loadAvailableTags = async () => {
     if (availableTags.value.length > 0) {
-      console.log('Tags already loaded:', availableTags.value.length);
+      
       return; // Already loaded
     }
     
-    console.log('Loading tags...');
+    
 
     isLoading.value = true;
     error.value = null;
@@ -52,19 +52,19 @@ export function useInterests() {
       
       if (apiTags.length > 0) {
         availableTags.value = apiTags;
-        console.log('Loaded tags from API:', availableTags.value.length);
+        
       } else {
         // API returned empty, use fallback
-        console.warn('API returned empty tags, using fallback');
+        
         availableTags.value = fallbackTags;
       }
     } catch (err: any) {
       // Fallback to default tags if API is not available
-      console.warn('API not available, using fallback tags:', err);
+      
       availableTags.value = fallbackTags;
     }
     
-    console.log('Final availableTags.length:', availableTags.value.length);
+    
     error.value = null; // Don't show error for fallback
     isLoading.value = false;
   };
@@ -79,7 +79,7 @@ export function useInterests() {
    */
   const tagOptions = computed(() => {
     const tags = availableTags.value || [];
-    console.log('tagOptions computed, availableTags.length:', tags.length);
+    
     return tags.map(tag => ({
       tag: tag.tag,
       description: tag.description

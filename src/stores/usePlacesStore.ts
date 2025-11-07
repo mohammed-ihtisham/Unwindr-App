@@ -165,7 +165,6 @@ export const usePlacesStore = defineStore('places', {
 
       // Apply interest/category/tags filtering
       if (state.selectedInterests.length > 0) {
-        console.log('Filtering by interests:', state.selectedInterests);
         items = items.filter((p) => {
           // Check if any of the place's category, tags, or interests match any of the selected interests
           // Compare case-insensitively
@@ -181,11 +180,10 @@ export const usePlacesStore = defineStore('places', {
             selectedInterestsLower.includes(placeTag)
           );
           if (matches) {
-            console.log(`Place "${p.name}" matches filter:`, { category: p.category, tags: p.tags });
           }
           return matches;
         });
-        console.log(`After interest filtering: ${items.length} places`);
+        
       }
 
       // Apply saved places filter
@@ -225,7 +223,13 @@ export const usePlacesStore = defineStore('places', {
       });
     },
     // Show only places within the current map viewport
+    // Exception: When "Saved Places" filter is active, show all bookmarked places regardless of viewport
     allPlaces(): Place[] {
+      // If "Saved Places" filter is active, show all bookmarked places (not restricted to viewport)
+      if (this.showSavedPlaces) {
+        return this.filteredPlaces;
+      }
+      
       // If we don't have viewport bounds yet, show all filtered places
       // This prevents the panel from being empty during initial load
       if (!this.viewportBounds) {
@@ -266,8 +270,24 @@ export const usePlacesStore = defineStore('places', {
         : [...this.selectedInterests, tag];
       // The watcher in LandingView will trigger fetchPlaces when filters change
     },
-    setSavedPlaces(b: boolean) {
+    async setSavedPlaces(b: boolean) {
       this.showSavedPlaces = b;
+      
+      // When enabling saved places filter, ensure all bookmarked places are loaded
+      if (b) {
+        const authStore = useAuthStore();
+        
+        // First, make sure we have the bookmarked place IDs
+        if (authStore.isAuthenticated && this.bookmarkedPlaceIds.size === 0) {
+          await this.loadBookmarkedPlaces();
+        }
+        
+        // Then load details for all bookmarked places
+        if (this.bookmarkedPlaceIds.size > 0) {
+          await this.loadBookmarkedPlaceDetails();
+        } else {
+        }
+      }
     },
     setUserLocation(loc: { lat: number; lng: number } | null) {
       this.userLocation = loc;
@@ -336,13 +356,7 @@ export const usePlacesStore = defineStore('places', {
         return;
       }
 
-      console.log('fetchPlaces called');
-      console.log('hasActiveFilters:', this.hasActiveFilters);
-      console.log('selectedInterests:', this.selectedInterests);
-      console.log('distanceMiles:', this.distanceMiles);
-      console.log('showSavedPlaces:', this.showSavedPlaces);
-      console.log('searchQuery:', this.searchQuery);
-
+      
       // Try to load from cache first
       if (this.loadFromCache()) {
         return;
@@ -410,9 +424,6 @@ export const usePlacesStore = defineStore('places', {
         this.loadingProgress = 100;
         this.isLoading = false;
         
-        console.log('Places loaded successfully:', this.places.length);
-        console.log('Filtered places:', this.filteredPlaces.length);
-        console.log('Selected interests:', this.selectedInterests);
         
         // Cache the loaded places for future visits
         this.cachePlaces();
@@ -439,7 +450,6 @@ export const usePlacesStore = defineStore('places', {
     async loadAllPlaces(placeIds: string[], loadMedia: boolean): Promise<void> {
       if (placeIds.length === 0) return;
       
-      console.log(`Loading ${placeIds.length} places (loadMedia: ${loadMedia})...`);
       
       // Load all places in parallel
       const placesPromises = placeIds.map(async (placeId) => {
@@ -472,7 +482,7 @@ export const usePlacesStore = defineStore('places', {
       this.places = validPlaces;
       this.loadingProgress = 95;
       
-      console.log(`Loaded ${validPlaces.length} places successfully`);
+      
     },
 
     /**
@@ -489,7 +499,7 @@ export const usePlacesStore = defineStore('places', {
       if (place.images && place.images.length > 1) return;
 
       try {
-        console.log(`Loading media for place ${placeId}...`);
+        
         const mediaUrls = await mediaLibraryService.getMediaUrlsByPlace(placeId);
         if (mediaUrls && mediaUrls.length > 0) {
           // Remove invalid/empty URLs and dedupe
@@ -498,9 +508,9 @@ export const usePlacesStore = defineStore('places', {
           const existing = new Set(place.images.filter((u) => !!u));
           const merged = [...place.images.filter((u) => !!u), ...cleaned.filter(u => !existing.has(u))];
           place.images = merged;
-          console.log(`Loaded ${cleaned.length} images for place ${placeId} (total now ${place.images.length})`);
+          
         }
-        console.log(`Loaded ${mediaUrls.length} images for place ${placeId}`);
+        
       } catch (error) {
         console.error(`Failed to load media for place ${placeId}:`, error);
         // Keep empty images array
@@ -564,7 +574,6 @@ export const usePlacesStore = defineStore('places', {
      */
     async loadPlacesInViewport(bounds: ViewportBounds, withPreviews: boolean = true): Promise<void> {
       try {
-        console.log('Loading places for viewport:', bounds);
         
         // Get places in viewport
         const viewportPlaces = await placeCatalogService.getPlacesInViewport({
@@ -574,7 +583,6 @@ export const usePlacesStore = defineStore('places', {
           eastLng: bounds.east,
         });
         
-        console.log(`Found ${viewportPlaces.length} places in viewport`);
         
         if (viewportPlaces.length === 0) {
           return;
@@ -634,7 +642,7 @@ export const usePlacesStore = defineStore('places', {
           });
         }
         
-        console.log(`Added ${uniqueNewPlaces.length} new places to display`);
+        
       } catch (error) {
         console.error('Error loading places in viewport:', error);
       }
@@ -816,9 +824,48 @@ export const usePlacesStore = defineStore('places', {
       try {
         const response = await bookmarkService.getBookmarkedPlaces();
         this.bookmarkedPlaceIds = new Set(response.placeIds);
+        
+        // If saved places filter is already enabled, load details for any missing places
+        if (this.showSavedPlaces && this.bookmarkedPlaceIds.size > 0) {
+          await this.loadBookmarkedPlaceDetails();
+        }
       } catch (error) {
         console.error('Failed to load bookmarked places:', error);
         this.bookmarkedPlaceIds = new Set<string>();
+      }
+    },
+
+    /**
+     * Load place details for all bookmarked places that aren't already loaded
+     */
+    async loadBookmarkedPlaceDetails() {
+      if (this.bookmarkedPlaceIds.size === 0) {
+        return;
+      }
+
+      
+      // Find bookmarked place IDs that aren't already in the places array
+      const existingPlaceIds = new Set(this.places.map(p => p.id));
+      const placeIdsToLoad = Array.from(this.bookmarkedPlaceIds).filter(
+        id => !existingPlaceIds.has(id)
+      );
+
+      
+      if (placeIdsToLoad.length === 0) {
+        return; // All bookmarked places are already loaded
+      }
+      
+      try {
+        // Load place details without media for faster loading
+        const newPlaces = await this.loadPlacesBatch(placeIdsToLoad, false);
+        
+        
+        // Add new places to the existing places array
+        this.places.push(...newPlaces);
+        
+        
+      } catch (error) {
+        console.error('Failed to load bookmarked place details:', error);
       }
     },
 
@@ -842,6 +889,21 @@ export const usePlacesStore = defineStore('places', {
         await bookmarkService.bookmarkPlace(placeId);
         // Optimistically update local state
         this.bookmarkedPlaceIds.add(placeId);
+        
+        // If saved places filter is active and this place isn't already loaded, load it
+        if (this.showSavedPlaces) {
+          const existingPlaceIds = new Set(this.places.map(p => p.id));
+          if (!existingPlaceIds.has(placeId)) {
+            // Load the newly bookmarked place
+            try {
+              const newPlaces = await this.loadPlacesBatch([placeId], false);
+              this.places.push(...newPlaces);
+            } catch (error) {
+              console.error('Failed to load newly bookmarked place:', error);
+            }
+          }
+        }
+        
         return true;
       } catch (error: any) {
         console.error('Failed to bookmark place:', error);

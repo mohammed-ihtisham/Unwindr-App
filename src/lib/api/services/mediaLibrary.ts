@@ -72,8 +72,7 @@ export const mediaLibraryService = {
         return [];
       }
 
-      console.log(`Found ${mediaItems.length} media items for place ${placeId}`);
-
+      
       // Extract the image URLs from the media items
       return mediaItems.map(item => item.imageUrl);
     } catch (error) {
