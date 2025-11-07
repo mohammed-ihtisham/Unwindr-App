@@ -176,11 +176,9 @@ export const usePlacesStore = defineStore('places', {
             ...placeInterestsLower
           ];
           const selectedInterestsLower = state.selectedInterests.map(i => i.toLowerCase());
-          const matches = allPlaceTags.some(placeTag => 
-            selectedInterestsLower.includes(placeTag)
-          );
-          if (matches) {
-          }
+          // AND semantics: every selected interest must be present in the place's tags/category/interests
+          const placeTagSet = new Set(allPlaceTags);
+          const matches = selectedInterestsLower.every(sel => placeTagSet.has(sel));
           return matches;
         });
         
