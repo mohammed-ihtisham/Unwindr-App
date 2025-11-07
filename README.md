@@ -56,7 +56,6 @@ src/
 │   │   │   ├── interestFilter.ts
 │   │   │   ├── mediaLibrary.ts
 │   │   │   ├── placeCatalog.ts
-│   │   │   ├── qualityRanking.ts
 │   │   │   └── userAuth.ts
 │   │   └── index.ts     # Main export
 │   ├── distance.ts      # Haversine distance calculation
@@ -194,7 +193,6 @@ The app is fully integrated with the backend API. It supports:
 - **PlaceCatalog** - Place discovery and management
 - **InterestFilter** - Preference tagging and matching
 - **MediaLibrary** - Media storage and retrieval
-- **QualityRanking** - Place quality metrics and recommendations
 
 ### API Documentation
 

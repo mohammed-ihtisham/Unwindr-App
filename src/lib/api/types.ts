@@ -273,44 +273,6 @@ export interface GetPreviewImagesForPlacesResponse extends Array<PlacePreviewIma
 // MediaAnalytics removed: no frontend types required
 
 // ============================================================================
-// QualityRanking Types
-// ============================================================================
-
-export interface UpdateMetricsRequest {
-  placeId: ID;
-  visits: number;
-  engagement: number;
-}
-
-export interface UpdateMetricsResponse {}
-
-export interface CalculateQualityScoreRequest {
-  placeId: ID;
-}
-
-export interface CalculateQualityScoreResponse {
-  score: number;
-}
-
-export interface SetRankingPreferencesRequest {
-  userId: ID;
-  prefersEmergent: boolean;
-  radius: number;
-}
-
-export interface SetRankingPreferencesResponse {}
-
-export interface GetRecommendedPlacesRequest {
-  userId: ID;
-  centerLat: number;
-  centerLng: number;
-}
-
-export interface GetRecommendedPlacesResponse {
-  place: ID;
-}
-
-// ============================================================================
 // InterestFilter Types
 // ============================================================================
 

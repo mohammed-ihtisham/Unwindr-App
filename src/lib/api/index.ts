@@ -11,7 +11,6 @@ export { userAuthService } from './services/userAuth';
 export { placeCatalogService } from './services/placeCatalog';
 export { interestFilterService } from './services/interestFilter';
 export { mediaLibraryService } from './services/mediaLibrary';
-export { qualityRankingService } from './services/qualityRanking';
 export { bookmarkService } from './services/bookmark';
 
 

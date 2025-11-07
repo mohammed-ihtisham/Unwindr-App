@@ -32,13 +32,6 @@ export const API_ENDPOINTS = {
     getMediaItemsByPlace: "/api/MediaLibrary/getMediaItemsByPlace",
     getPreviewImagesForPlaces: "/api/MediaLibrary/getPreviewImagesForPlaces",
   },
-  // QualityRanking
-  qualityRanking: {
-    updateMetrics: "/api/QualityRanking/updateMetrics",
-    calculateQualityScore: "/api/QualityRanking/calculateQualityScore",
-    setPreferences: "/api/QualityRanking/setPreferences",
-    getRecommendedPlaces: "/api/QualityRanking/_getRecommendedPlaces",
-  },
   // InterestFilter
   interestFilter: {
     setPreferences: "/api/InterestFilter/setPreferences",

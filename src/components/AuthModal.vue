@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useAuthStore } from '@/stores/useAuthStore';
 
 const props = defineProps<{
@@ -70,6 +70,17 @@ const switchMode = () => {
   mode.value = mode.value === 'login' ? 'register' : 'login';
   resetForm();
 };
+
+// Always default to login when the modal opens
+watch(
+  () => props.show,
+  (isOpen) => {
+    if (isOpen) {
+      mode.value = 'login';
+      resetForm();
+    }
+  }
+);
 
 const handleClose = () => {
   resetForm();
