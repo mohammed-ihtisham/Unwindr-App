@@ -3,6 +3,7 @@ import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { MapPin, ChevronLeft, ChevronRight, Bookmark } from 'lucide-vue-next';
 import type { Place } from '@/stores/usePlacesStore';
 import { usePlacesStore } from '@/stores/usePlacesStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import MediaGallery from './MediaGallery.vue';
 import { useInterests } from '@/composables/useInterests';
 
@@ -17,6 +18,7 @@ const emit = defineEmits<{
 }>();
 
 const placesStore = usePlacesStore();
+const authStore = useAuthStore();
 const { formatTagDisplay } = useInterests();
 const showGallery = ref(false);
 const currentImageIndex = ref(0);
@@ -30,26 +32,8 @@ let io: IntersectionObserver | null = null;
 let slideshowTimer: number | undefined;
 const prefetchedAll = ref(false);
 
-// Simple localStorage-based bookmarks for now
-const BOOKMARKS_KEY = 'unwindr:bookmarks';
-const isBookmarked = ref(false);
-
-function loadBookmarks(): Set<string> {
-  try {
-    const raw = localStorage.getItem(BOOKMARKS_KEY);
-    return new Set<string>(raw ? JSON.parse(raw) : []);
-  } catch {
-    return new Set<string>();
-  }
-}
-
-function saveBookmarks(ids: Set<string>) {
-  try {
-    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(Array.from(ids)));
-  } catch {
-    // ignore
-  }
-}
+const isAuthenticated = computed(() => authStore.isAuthenticated);
+const isBookmarked = computed(() => placesStore.isPlaceBookmarked(props.place.id));
 
 const formattedDistance = computed(() => {
   if (props.place.distanceMilesFromUser != null) {
@@ -178,17 +162,13 @@ function stopSlideshow() {
   }
 }
 
-function toggleBookmark(e?: Event) {
+async function toggleBookmark(e?: Event) {
   if (e) e.stopPropagation();
-  const ids = loadBookmarks();
-  if (ids.has(props.place.id)) {
-    ids.delete(props.place.id);
-    isBookmarked.value = false;
+  if (isBookmarked.value) {
+    await placesStore.unbookmarkPlace(props.place.id);
   } else {
-    ids.add(props.place.id);
-    isBookmarked.value = true;
+    await placesStore.bookmarkPlace(props.place.id);
   }
-  saveBookmarks(ids);
   emit('bookmark', props.place.id);
 }
 
@@ -264,15 +244,7 @@ function handleHoverStart() {
   startSlideshow();
 }
 
-// Initialize bookmark state on mount and when place id changes
-onMounted(() => {
-  const ids = loadBookmarks();
-  isBookmarked.value = ids.has(props.place.id);
-});
-watch(() => props.place.id, () => {
-  const ids = loadBookmarks();
-  isBookmarked.value = ids.has(props.place.id);
-});
+// Bookmark state is now computed from the store, no initialization needed
 
 // Switch image only after the target image is loaded to avoid blanks
 function switchToIndex(idx: number) {
@@ -363,8 +335,9 @@ function switchToIndex(idx: number) {
         />
       </div>
       
-      <!-- Bookmark Icon (Save) -->
+      <!-- Bookmark Icon (Save) - Only show when authenticated -->
       <button
+        v-if="isAuthenticated"
         @click.stop="toggleBookmark"
         :aria-pressed="isBookmarked"
         :title="isBookmarked ? 'Remove bookmark' : 'Save to bookmarks'"

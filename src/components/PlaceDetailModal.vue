@@ -42,6 +42,7 @@
               <!-- Actions -->
               <div class="flex items-center gap-3">
                 <button
+                  v-if="isAuthenticated"
                   @click="toggleBookmark"
                   :aria-pressed="isBookmarked"
                   class="flex items-center gap-2 px-3 py-2 text-earth-dark hover:text-earth-khaki transition-colors rounded-lg hover:bg-earth-cream"
@@ -306,6 +307,7 @@
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { ChevronLeft, MapPin, Grid3X3, ExternalLink, Bookmark } from 'lucide-vue-next';
 import { usePlacesStore } from '@/stores/usePlacesStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { useInterests } from '@/composables/useInterests';
 import MediaGallery from './MediaGallery.vue';
 
@@ -320,14 +322,19 @@ const emit = defineEmits<{
 }>();
 
 const placesStore = usePlacesStore();
+const authStore = useAuthStore();
 const { formatTagDisplay } = useInterests();
 
-const BOOKMARKS_KEY = 'unwindr:bookmarks';
-const isBookmarked = ref(false);
 const showFullGallery = ref(false);
 const isLoading = ref(false);
 const loadedSet = ref<Set<string>>(new Set());
 const overlayHidden = ref<Set<string>>(new Set());
+
+const isAuthenticated = computed(() => authStore.isAuthenticated);
+const isBookmarked = computed(() => {
+  if (!place.value) return false;
+  return placesStore.isPlaceBookmarked(place.value.id);
+});
 
 const sortedImages = computed(() => {
   const imgs = (place.value?.images || []).filter((u) => !!u);
@@ -368,34 +375,13 @@ function openExternalGallery(url?: string) {
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
-function loadBookmarks(): Set<string> {
-  try {
-    const raw = localStorage.getItem(BOOKMARKS_KEY);
-    return new Set<string>(raw ? JSON.parse(raw) : []);
-  } catch {
-    return new Set<string>();
-  }
-}
-
-function saveBookmarks(ids: Set<string>) {
-  try {
-    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(Array.from(ids)));
-  } catch {
-    // ignore
-  }
-}
-
-function toggleBookmark() {
+async function toggleBookmark() {
   if (!place.value) return;
-  const ids = loadBookmarks();
-  if (ids.has(place.value.id)) {
-    ids.delete(place.value.id);
-    isBookmarked.value = false;
+  if (isBookmarked.value) {
+    await placesStore.unbookmarkPlace(place.value.id);
   } else {
-    ids.add(place.value.id);
-    isBookmarked.value = true;
+    await placesStore.bookmarkPlace(place.value.id);
   }
-  saveBookmarks(ids);
 }
 
 function isIOS(): boolean {
@@ -520,10 +506,5 @@ onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleKeydown);
 });
 
-// Sync bookmark state when opening/when place changes
-watch([place, () => props.open], () => {
-  if (!place.value) return;
-  const ids = loadBookmarks();
-  isBookmarked.value = ids.has(place.value.id);
-});
+// Bookmark state is now computed from the store, no watch needed
 </script>

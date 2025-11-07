@@ -5,7 +5,6 @@ import { storeToRefs } from 'pinia';
 import { usePlacesStore, type ViewportBounds } from '@/stores/usePlacesStore';
 import { useAuthStore } from '@/stores/useAuthStore';
 import SearchBar from '@/components/SearchBar.vue';
-import FilterChips from '@/components/FilterChips.vue';
 import MileFilter from '@/components/MileFilter.vue';
 import InterestSelector from '@/components/InterestSelector.vue';
 import ToggleSwitch from '@/components/ToggleSwitch.vue';
@@ -21,7 +20,7 @@ const {
   searchQuery,
   distanceMiles,
   selectedInterests,
-  showHiddenGems,
+  showSavedPlaces,
   userLocation,
   allPlaces,
   filteredPlaces,
@@ -49,10 +48,16 @@ const placesPanelRef = ref<InstanceType<typeof PlacesPanel> | null>(null);
 // Control whether the detail modal should auto-open the gallery
 const autoOpenGalleryFromMap = ref(false);
 
-// Close modal automatically when user becomes authenticated
-watch(() => authStore.isAuthenticated, (isAuthenticated) => {
+// Close modal automatically when user becomes authenticated and load bookmarks
+watch(() => authStore.isAuthenticated, async (isAuthenticated) => {
   if (isAuthenticated) {
     showAuthModal.value = false;
+    // Load bookmarked places when user logs in
+    await placesStore.loadBookmarkedPlaces();
+  } else {
+    // Clear bookmarks and disable saved places filter when user logs out
+    placesStore.bookmarkedPlaceIds = new Set<string>();
+    placesStore.setSavedPlaces(false);
   }
 });
 
@@ -68,7 +73,7 @@ onMounted(async () => {
 
 // Watch for filter changes to update display (no need to refetch from server)
 watch(
-  () => [searchQuery.value, selectedInterests.value, distanceMiles.value, showHiddenGems.value],
+  () => [searchQuery.value, selectedInterests.value, distanceMiles.value, showSavedPlaces.value],
   () => {
     // Filtering happens client-side via the filteredPlaces getter
     // No need to refetch from server
@@ -159,7 +164,7 @@ async function handleViewportChange(bounds: ViewportBounds) {
 function clearAllFilters() {
   placesStore.setQuery('');
   placesStore.setDistance(null);
-  placesStore.setHiddenGems(false);
+  placesStore.setSavedPlaces(false);
   // Reset selected interests directly on the store for now
   placesStore.selectedInterests = [];
 }
@@ -222,18 +227,19 @@ function clearAllFilters() {
                 @update:selected-tags="(val) => (selectedInterests = val)"
                 @tags-generated="handleTagsGenerated"
               />
-              <!-- Hidden Gems Toggle -->
+              <!-- Saved Places Toggle - Only show when authenticated -->
               <div
+                v-if="authStore.isAuthenticated"
                 :class="[
                   'flex items-center gap-2 px-4 py-2.5 rounded-2xl ring-1 hover:ring-brand-300 focus-within:ring-2 focus-within:ring-brand-300 transition-all duration-200',
-                  showHiddenGems ? 'bg-brand-50 ring-brand-300' : 'bg-white/60 ring-earth-gray/40'
+                  showSavedPlaces ? 'bg-brand-50 ring-brand-300' : 'bg-white/60 ring-earth-gray/40'
                 ]"
               >
-                <span class="text-sm text-earth-dark font-medium">Hidden Gems</span>
+                <span class="text-sm text-earth-dark font-medium">Saved Places</span>
                 <ToggleSwitch
-                  :model-value="showHiddenGems"
-                  @update:model-value="placesStore.setHiddenGems"
-                  label="Toggle hidden gems"
+                  :model-value="showSavedPlaces"
+                  @update:model-value="placesStore.setSavedPlaces"
+                  label="Toggle saved places"
                 />
               </div>
 

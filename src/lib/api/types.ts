@@ -371,3 +371,51 @@ export interface GetAvailableTagsResponse {
   tags: TagOption[];
 }
 
+// ============================================================================
+// Bookmark Types
+// ============================================================================
+
+export interface BookmarkPlaceRequest {
+  sessionToken: string;
+  placeId: ID;
+}
+
+export interface BookmarkPlaceResponse {
+  bookmarkId?: ID;
+  error?: string;
+}
+
+export interface UnbookmarkPlaceRequest {
+  sessionToken: string;
+  placeId: ID;
+}
+
+export interface UnbookmarkPlaceResponse {
+  success: boolean;
+}
+
+export interface GetUserBookmarksRequest {
+  sessionToken: string;
+}
+
+export interface GetUserBookmarksResponse {
+  bookmarkIds: ID[];
+}
+
+export interface GetBookmarkedPlacesRequest {
+  sessionToken: string;
+}
+
+export interface GetBookmarkedPlacesResponse {
+  placeIds: ID[];
+}
+
+export interface IsBookmarkedRequest {
+  sessionToken: string;
+  placeId: ID;
+}
+
+export interface IsBookmarkedResponse {
+  isBookmarked: boolean;
+}
+

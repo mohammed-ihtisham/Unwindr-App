@@ -48,4 +48,12 @@ export const API_ENDPOINTS = {
     getMatchingPlaces: "/api/InterestFilter/getMatchingPlaces",
     getAvailableTags: "/api/InterestFilter/getAvailableTags",
   },
+  // Bookmark
+  bookmark: {
+    bookmarkPlace: "/api/Bookmark/bookmarkPlace",
+    unbookmarkPlace: "/api/Bookmark/unbookmarkPlace",
+    getUserBookmarks: "/api/Bookmark/getUserBookmarks",
+    getBookmarkedPlaces: "/api/Bookmark/getBookmarkedPlaces",
+    isBookmarked: "/api/Bookmark/isBookmarked",
+  },
 } as const;

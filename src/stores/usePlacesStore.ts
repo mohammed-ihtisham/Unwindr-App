@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { haversineDistance } from '@/lib/distance';
-import { placeCatalogService, mediaLibraryService, interestFilterService, type PlaceDetails, type ID, type ViewportPlace } from '@/lib/api';
+import { placeCatalogService, mediaLibraryService, interestFilterService, bookmarkService, type PlaceDetails, type ID, type ViewportPlace } from '@/lib/api';
 import { useAuthStore } from './useAuthStore';
 
 export type Place = {
@@ -29,7 +29,7 @@ type State = {
   searchQuery: string;
   distanceMiles: number | null;
   selectedInterests: string[];
-  showHiddenGems: boolean;
+  showSavedPlaces: boolean; // Changed from showHiddenGems
   userLocation: { lat: number; lng: number } | null;
   places: Place[];
   selectedPlaceId: string | null;
@@ -45,6 +45,7 @@ type State = {
   backgroundLoading: boolean; // Track if background loading is in progress
   cachedPlaces: Place[]; // Cache for places to avoid re-fetching
   cacheTimestamp: number | null; // Timestamp of when cache was created
+  bookmarkedPlaceIds: Set<string>; // Track bookmarked place IDs for the current user
 };
 
 /**
@@ -103,7 +104,7 @@ export const usePlacesStore = defineStore('places', {
     searchQuery: '',
     distanceMiles: null, // Start with null, user must set distance filter
     selectedInterests: [],
-    showHiddenGems: false,
+    showSavedPlaces: false, // Changed from showHiddenGems
     userLocation: { lat: 42.359722, lng: -71.091944 },
     places: [],
     selectedPlaceId: null,
@@ -119,15 +120,16 @@ export const usePlacesStore = defineStore('places', {
     backgroundLoading: false,
     cachedPlaces: [],
     cacheTimestamp: null,
+    bookmarkedPlaceIds: new Set<string>(),
   }),
   getters: {
-    // Check if any filter is active (search, interest, distance, or hidden gems)
+    // Check if any filter is active (search, interest, distance, or saved places)
     hasActiveFilters: (state): boolean => {
       return (
         (state.searchQuery && state.searchQuery.trim().length > 0) ||
         state.selectedInterests.length > 0 ||
         state.distanceMiles !== null ||
-        state.showHiddenGems
+        state.showSavedPlaces
       );
     },
     // All places with filters applied (search, distance, hidden gems)
@@ -186,9 +188,9 @@ export const usePlacesStore = defineStore('places', {
         console.log(`After interest filtering: ${items.length} places`);
       }
 
-      // Apply hidden gems filter
-      if (state.showHiddenGems) {
-        items = items.filter((p) => p.hiddenGem);
+      // Apply saved places filter
+      if (state.showSavedPlaces) {
+        items = items.filter((p) => state.bookmarkedPlaceIds.has(p.id));
       }
 
       return items;
@@ -264,8 +266,8 @@ export const usePlacesStore = defineStore('places', {
         : [...this.selectedInterests, tag];
       // The watcher in LandingView will trigger fetchPlaces when filters change
     },
-    setHiddenGems(b: boolean) {
-      this.showHiddenGems = b;
+    setSavedPlaces(b: boolean) {
+      this.showSavedPlaces = b;
     },
     setUserLocation(loc: { lat: number; lng: number } | null) {
       this.userLocation = loc;
@@ -338,7 +340,7 @@ export const usePlacesStore = defineStore('places', {
       console.log('hasActiveFilters:', this.hasActiveFilters);
       console.log('selectedInterests:', this.selectedInterests);
       console.log('distanceMiles:', this.distanceMiles);
-      console.log('showHiddenGems:', this.showHiddenGems);
+      console.log('showSavedPlaces:', this.showSavedPlaces);
       console.log('searchQuery:', this.searchQuery);
 
       // Try to load from cache first
@@ -802,11 +804,90 @@ export const usePlacesStore = defineStore('places', {
 
 
     /**
+     * Load bookmarked places for the current user
+     */
+    async loadBookmarkedPlaces() {
+      const authStore = useAuthStore();
+      if (!authStore.isAuthenticated) {
+        this.bookmarkedPlaceIds = new Set<string>();
+        return;
+      }
+
+      try {
+        const response = await bookmarkService.getBookmarkedPlaces();
+        this.bookmarkedPlaceIds = new Set(response.placeIds);
+      } catch (error) {
+        console.error('Failed to load bookmarked places:', error);
+        this.bookmarkedPlaceIds = new Set<string>();
+      }
+    },
+
+    /**
+     * Check if a place is bookmarked (synchronous check from local state)
+     */
+    isPlaceBookmarked(placeId: string): boolean {
+      return this.bookmarkedPlaceIds.has(placeId);
+    },
+
+    /**
+     * Bookmark a place
+     */
+    async bookmarkPlace(placeId: string): Promise<boolean> {
+      const authStore = useAuthStore();
+      if (!authStore.isAuthenticated) {
+        return false;
+      }
+
+      try {
+        await bookmarkService.bookmarkPlace(placeId);
+        // Optimistically update local state
+        this.bookmarkedPlaceIds.add(placeId);
+        return true;
+      } catch (error: any) {
+        console.error('Failed to bookmark place:', error);
+        // If already bookmarked, that's fine - update local state anyway
+        if (error.message?.includes('already exists')) {
+          this.bookmarkedPlaceIds.add(placeId);
+          return true;
+        }
+        return false;
+      }
+    },
+
+    /**
+     * Unbookmark a place
+     */
+    async unbookmarkPlace(placeId: string): Promise<boolean> {
+      const authStore = useAuthStore();
+      if (!authStore.isAuthenticated) {
+        return false;
+      }
+
+      try {
+        const response = await bookmarkService.unbookmarkPlace(placeId);
+        if (response.success) {
+          // Update local state
+          this.bookmarkedPlaceIds.delete(placeId);
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('Failed to unbookmark place:', error);
+        return false;
+      }
+    },
+
+    /**
      * Initialize the store with data
      */
     async initialize() {
       // Hydrate user location from storage; if missing, caller may prompt
       this.loadPersistedUserLocation();
+      // Load bookmarked places if user is authenticated
+      const authStore = useAuthStore();
+      if (authStore.isAuthenticated) {
+        await this.loadBookmarkedPlaces();
+      }
     },
   },
 });
