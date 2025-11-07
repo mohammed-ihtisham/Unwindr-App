@@ -176,9 +176,9 @@ export const usePlacesStore = defineStore('places', {
             ...placeInterestsLower
           ];
           const selectedInterestsLower = state.selectedInterests.map(i => i.toLowerCase());
-          // AND semantics: every selected interest must be present in the place's tags/category/interests
+          // OR semantics: at least one selected interest must be present in the place's tags/category/interests
           const placeTagSet = new Set(allPlaceTags);
-          const matches = selectedInterestsLower.every(sel => placeTagSet.has(sel));
+          const matches = selectedInterestsLower.some(sel => placeTagSet.has(sel));
           return matches;
         });
         
