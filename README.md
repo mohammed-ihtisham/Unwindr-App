@@ -1,229 +1,226 @@
 # Unwindr App
 
-A modern, reactive place discovery app built with Vue 3, TypeScript, and Tailwind CSS. Discover hidden gems and popular spots with an interactive map interface.
+A modern, reactive place discovery app built with Vue 3, TypeScript, and Tailwind CSS. Explore nearby spots on an interactive map, filter by interests and distance, and save your favorite places.
 
 ## Features
 
-- 🔍 **Smart Search** - Debounced search across place names, addresses, and interests
-- 📍 **Interactive Map** - Leaflet-powered map with custom image preview markers
-- 🎯 **Advanced Filtering** - Filter by distance, interests, and hidden gems
-- 📱 **Responsive Design** - Beautiful UI that works on desktop and mobile
-- 🖼️ **Media Gallery** - Lightbox gallery with keyboard navigation
-- 📄 **Pagination** - Smooth navigation through place listings
-- 🎨 **Modern UI** - Clean design with Tailwind CSS utilities
-- 🔐 **Authentication** - User login/registration with session management
-- 🌐 **Backend Integration** - Full REST API integration with type-safe services
+- 🔍 **Smart search**: Debounced search across names, addresses, categories, and tags
+- 🗺️ **Interactive map**: Leaflet map with custom preview markers
+- 🧭 **Viewport filtering**: Load and filter by the visible map area
+- 📏 **Distance filter**: Show places within a chosen radius from your location
+- 🏷️ **Interest & tag filtering**: Multi-select categories/tags
+- 💾 **Saved places (bookmarks)**: Bookmark places and filter to only your saved list
+- 🖼️ **Media gallery**: Lightbox gallery with keyboard navigation
+- 📱 **Responsive UI**: Works great on desktop and mobile
+- 🔐 **Authentication**: Register/login with persisted sessions
+- 🧩 **Type-safe API**: Fully typed service layer with Axios
+- ⚡ **Performance**: Background loading, client-side caching, and progressive details
 
 ## Tech Stack
 
-- **Vue 3** - Composition API with `<script setup>`
-- **TypeScript** - Full type safety
-- **Vite** - Lightning-fast dev server and build tool
-- **Pinia** - State management
-- **Tailwind CSS** - Utility-first styling
-- **Leaflet** - Interactive maps
-- **Lucide Icons** - Beautiful icons
-- **Axios** - HTTP client for API requests
+- **Vue 3** (Composition API, `<script setup>`)
+- **TypeScript**
+- **Vite**
+- **Pinia** (state management)
+- **Tailwind CSS**
+- **Leaflet**
+- **Lucide Icons**
+- **Axios**
 
 ## Project Structure
 
+Top-level:
+```
+.
+├── src/
+├── public/
+├── dist/                  # Production build output
+├── api-spec.md            # Backend API spec (reference)
+├── vite.config.ts         # Dev server and proxy
+├── package.json
+└── README.md
+```
+
+Application code:
 ```
 src/
-├── components/          # Reusable Vue components
-│   ├── AuthModal.vue    # Login/Register modal
+├── components/            # Reusable Vue components
+│   ├── AuthModal.vue
 │   ├── FilterChips.vue
+│   ├── InterestSelector.vue
 │   ├── LoginButton.vue
 │   ├── MapCanvas.vue
 │   ├── MediaGallery.vue
 │   ├── MileFilter.vue
 │   ├── Pagination.vue
 │   ├── PlaceCard.vue
+│   ├── PlaceDetailModal.vue
 │   ├── PlacesPanel.vue
 │   ├── SearchBar.vue
 │   ├── TagSelector.vue
 │   └── ToggleSwitch.vue
-├── views/               # Page components
+├── views/
 │   └── LandingView.vue
-├── stores/              # Pinia stores
-│   ├── useAuthStore.ts   # Authentication state
-│   └── usePlacesStore.ts # Places data & filtering
-├── lib/                 # Utility functions & API
-│   ├── api/             # Backend API integration
-│   │   ├── client.ts    # HTTP client (axios)
-│   │   ├── config.ts    # API configuration
-│   │   ├── types.ts     # TypeScript types
-│   │   ├── services/    # API service modules
+├── stores/                # Pinia stores
+│   ├── useAuthStore.ts
+│   └── usePlacesStore.ts
+├── lib/
+│   ├── api/               # Backend integration
+│   │   ├── client.ts      # Axios client (with credentials)
+│   │   ├── config.ts      # Base URL and timeouts
+│   │   ├── types.ts
+│   │   ├── services/      # Service modules
+│   │   │   ├── bookmark.ts
 │   │   │   ├── interestFilter.ts
 │   │   │   ├── mediaLibrary.ts
-│   │   │   ├── placeCatalog.ts
-│   │   │   └── userAuth.ts
-│   │   └── index.ts     # Main export
-│   ├── distance.ts      # Haversine distance calculation
-│   ├── interests.ts     # Interest tags and constants
-├── router/              # Vue Router configuration
+│   │   │   └── placeCatalog.ts
+│   │   └── index.ts
+│   ├── distance.ts        # Haversine distance
+│   └── interests.ts
+├── router/
 │   └── index.ts
-├── assets/              # Global styles
+├── assets/
 │   ├── main.css
 │   └── base.css
-└── main.ts              # App entry point
+└── main.ts
 ```
 
-## Setup
+## Getting Started
 
 ### Prerequisites
 
 - Node.js 20+ and npm
 
-### Installation
+### Install and run
 
 ```bash
 # Install dependencies
 npm install
 
-# Start development server
+# Start development server (http://localhost:5174)
 npm run dev
+```
 
-# Build for production
+### Build and preview
+
+```bash
+# Type-check and build for production (outputs to dist/)
 npm run build
 
-# Preview production build
+# Preview the built app locally
 npm run preview
 ```
 
-## Development
+## Configuration
 
-### Running the App
+The app talks to a backend API under `/api`.
 
-```bash
-npm run dev
-```
+- **Development (default)**: The dev server proxies `/api` to `http://localhost:8000` (see `vite.config.ts`). No env vars required.
+- **Production or custom dev**: Set `VITE_API_BASE_URL` to your API origin (e.g., `https://api.example.com`). Requests will go directly to that origin and will not use the proxy.
 
-The app will be available at `http://localhost:5174`
-
-### Environment configuration
-
-This project supports two ways to reach the backend API:
-
-- **Development (default)**: Vite proxy forwards `/api` to `http://localhost:8000` (see `vite.config.ts`). No env variables needed.
-- **Production or custom dev URL**: Set `VITE_API_BASE_URL` to your API origin (e.g. `https://api.example.com`).
-
-Create a `.env` or `.env.local` if you need to override the default:
+Create `.env.local` to override:
 
 ```bash
 echo "VITE_API_BASE_URL=https://api.example.com" > .env.local
 ```
 
 Notes:
-- When `VITE_API_BASE_URL` is unset, the app uses the Vite proxy (`/api → http://localhost:8000`).
-- When `VITE_API_BASE_URL` is set, requests go directly to that origin and the proxy is not used.
+- Cookies are sent with requests (`withCredentials: true`). Ensure your backend sets cookies appropriately for your deployment (domain, `SameSite=None; Secure` when cross-site).
+- Dev server runs on port `5174`; proxy forwards `/api` to `http://localhost:8000`.
 
 ### Scripts
 
 ```bash
 npm run dev         # Start dev server (Vite)
 npm run build       # Type-check then build for production
-npm run preview     # Preview the production build
+npm run preview     # Preview production build
 npm run type-check  # Vue TypeScript type checking
 npm run lint        # ESLint (Vue/TS) with --fix
 npm run format      # Prettier on src/
 npm run test:unit   # Vitest unit tests
 ```
 
-## Usage
+## Using the App
 
-### Filters
+- **Sign in**: Use the Login button to register or authenticate
+- **Search**: Type to search by name, address, category, and tags (debounced)
+- **Map**: Pan/zoom to load places in the visible area; click markers for details
+- **Filters**:
+  - Distance radius from your location
+  - Interest/tag multi-select
+  - Saved places filter to show only your bookmarks
+- **Cards**: Click a card to focus the place on the map
+- **Images**: Open the gallery and use keyboard controls
 
-- **Distance**: Filter places by distance from your location (5, 10, 25, 50 miles, or any distance)
-- **Interests**: Multi-select interest tags (coffee, parks, restaurants, art, music, etc.)
-- **Hidden Gems**: Toggle to show only lesser-known local favorites
-
-### Interactions
-
-- **Authentication**: Click "Sign in" to open login/register modal
-- **Search**: Type to search places by name, address, or interests (debounced)
-- **Map**: Click markers to select places
-- **Cards**: Click cards to select and highlight on map
-- **Images**: Click place images to open gallery
-- **Like/Share**: Interact with places (stubs for now)
-- **Pagination**: Navigate through place listings
-
-### Keyboard Shortcuts
-
-In Media Gallery:
-- `Escape` - Close gallery
-- `Arrow Left` - Previous image
-- `Arrow Right` - Next image
+Keyboard shortcuts (gallery):
+- `Escape` — Close
+- `Arrow Left` — Previous
+- `Arrow Right` — Next
 
 ## State Management
 
-Pinia stores centralize state:
+Pinia stores centralize state and side effects:
 
-### Auth Store (`useAuthStore`)
-- User authentication state (login/logout/register)
-- Session token management (persisted in localStorage)
-- User profile data (username, userId, canModerate)
-- Password change functionality
-- Auto-restore session on app startup
+### `useAuthStore`
+- Register, login, logout
+- Persisted session token (localStorage)
+- Fetch authenticated user profile (`username`, `userId`, `canModerate`)
+- Restore session on app startup
 
-### Places Store (`usePlacesStore`)
-- Search query
-- Distance filter
-- Selected interests
-- Hidden gems toggle
-- User location
-- Place data (from API)
-- Selected place
-- Pagination state
-- Loading and error states
+### `usePlacesStore`
+- Search query, distance, selected interests
+- User location (persisted, with geolocation prompt/fallback)
+- Places list, selected place, modal state
+- Saved places (bookmarks) management and filtering
+- Viewport-aware filtering and progressive enrichment (details + media)
+- Client-side caching for faster revisits
 
 ## Data Flow
 
-1. User interactions emit events from child components
-2. Parent components (Landing page) update the Pinia store
-3. Store getters compute filtered/paginated data reactively
-4. Components receive updated data via props
-5. UI updates automatically without page reloads
+1. User interacts with filters/map/components
+2. Stores update state and trigger API calls as needed
+3. Getters compute filtered/viewport-bounded lists
+4. Components render reactive data
 
 ## Backend Integration
 
-The app is fully integrated with the backend API. It supports:
+Service modules (type-safe) integrate with the API:
+- **UserAuth**: register, login, logout, get authenticated user
+- **PlaceCatalog**: get places in viewport, get place details, add place
+- **InterestFilter**: tags, preference inference, matching
+- **MediaLibrary**: media URLs and preview images
+- **Bookmark**: bookmark/unbookmark, fetch saved places
 
-### Concepts Integrated
-- **UserAuth** - User authentication and authorization
-- **PlaceCatalog** - Place discovery and management
-- **InterestFilter** - Preference tagging and matching
-- **MediaLibrary** - Media storage and retrieval
+See `api-spec.md` for the detailed API contract.
 
-### API Documentation
+## Deployment
 
-- See `api-spec.md` for the backend API specification implemented by this app.
+1. Build the app: `npm run build` (outputs to `dist/`)
+2. Serve the static files with your host (e.g., Nginx, Netlify, Vercel, S3 + CDN)
+3. Set `VITE_API_BASE_URL` at build-time to your API origin
+4. Ensure your backend CORS and cookie settings allow the app origin
 
 ## Troubleshooting
 
-- Backend not running: API requests will fail; start your server on `http://localhost:8000` or set `VITE_API_BASE_URL`.
-- CORS issues in production: ensure your API allows the app's origin and that `withCredentials` settings match server config.
-- Auth 401s clear the session token automatically; sign in again to refresh your session.
-
-## Future Enhancements
-
-- [x] Backend integration with API endpoints
-- [x] User authentication and profiles
-- [x] Type-safe API services
-- [x] Login/signup modal UI
-- [ ] Route guards for protected routes
-- [ ] User-contributed places UI
-- [ ] Photo upload functionality
-- [ ] Social features UI (likes, shares, comments)
-- [ ] Natural language search UI
-- [ ] Quality ranking visualization
-- [ ] Mobile app (Capacitor/React Native)
-- [ ] Offline support with PWA
+- Backend not running: Start your API at `http://localhost:8000` or set `VITE_API_BASE_URL`
+- Network/timeout errors: Confirm API is reachable and CORS allows the app origin
+- 401 responses: Session is cleared automatically; sign in again
+- Geolocation blocked: The app falls back to Boston, MA and still works
+- Database errors: If you see messages like “unexpected end of file”, try again or check backend DB connectivity
 
 ## Browser Support
 
 - Chrome/Edge (latest)
 - Firefox (latest)
 - Safari (latest)
+
+## Contributing
+
+Issues and PRs are welcome. Please run type-checks and linters before submitting:
+
+```bash
+npm run type-check && npm run lint && npm run test:unit
+```
 
 ## License
 
